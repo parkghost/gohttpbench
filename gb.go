@@ -4,12 +4,8 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	//"net/http"
-	// "net/http/pprof"
 	"os"
 	"runtime"
-	//"runtime/pprof"
-	//"strconv"
 )
 
 const (
@@ -34,24 +30,6 @@ func main() {
 		if err := detectHost(config); err != nil {
 			log.Fatal(err)
 		} else {
-			/*
-
-				go func() {
-					log.Println(http.ListenAndServe("localhost:6060", nil))
-				}()
-
-				cpuprofile := "cpu_" + strconv.Itoa(os.Getpid()) + ".prof"
-
-				if cpuprofile != "" {
-					f, err := os.Create(cpuprofile)
-					if err != nil {
-						log.Fatal(err)
-					}
-					pprof.StartCPUProfile(f)
-					defer pprof.StopCPUProfile()
-				}
-
-			*/
 			runtime.GOMAXPROCS(GoMaxProcs)
 			startBenchmark(config)
 		}

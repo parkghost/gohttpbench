@@ -12,7 +12,7 @@ func TestStdDev(t *testing.T) {
 
 	for expectedData, testingData := range testData {
 
-		if result := stdDev(testingData); int(result*1000) != int(expectedData*1000) {
+		if result := StdDev(testingData); int(result*1000) != int(expectedData*1000) {
 			t.Errorf("expected %d, get", expectedData, result)
 		}
 	}
