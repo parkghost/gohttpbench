@@ -1,9 +1,20 @@
 Go-HttpBench
-=======
+====
 
 *an ab-like benchmark tool run on multi-core cpu*
 
-### Usage:
+Installation
+--------------
+1. install [Go](http://golang.org/doc/install) into your environment
+2. download and build Go-HttpBench
+
+```
+go get github.com/parkghost/gohttpbench
+go build -o bin/gb github.com/parkghost/gohttpbench
+```
+
+Usage
+-----------
 
 ```
 Usage: gb [options] [http[s]://]hostname[:port]/path
@@ -26,7 +37,7 @@ Options are:
 ```
 
 ### Example:
-	$ ./gb -c 1000 -n 100000 -k -r http://localhost:8080/
+	$ gb -c 1000 -n 100000 -k http://localhost:8080/
 
 	This is GoHttpBench, Version 0.1.0, https://github.com/parkghost/gohttpbench
 	Author: Brandon Chen, Email: parkghost@gmail.com
