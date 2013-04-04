@@ -1,4 +1,5 @@
 temp/
 postfile.txt
 *.sh
+*.csv
 gb

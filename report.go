@@ -20,13 +20,6 @@ func report(config *Config, input chan *Stats) {
 	totalExecutionTime := stats.totalExecutionTime
 	totalReceived := stats.totalReceived
 
-	stdDevOfResponseTime := StdDev(responseTimeData[:responseTimeDataIdx]) / 1000000
-	sort.Sort(Int64Slice(responseTimeData))
-
-	meanOfResponseTime := int64(totalExecutionTime) / int64(totalRequests) / 1000000
-	medianOfResponseTime := responseTimeData[len(responseTimeData)/2] / 1000000
-	minResponseTime := responseTimeData[0] / 1000000
-	maxResponseTime := responseTimeData[len(responseTimeData)-1] / 1000000
 	URL, _ := url.Parse(config.url)
 
 	fmt.Fprint(&buffer, "\n\n")
@@ -51,30 +44,38 @@ func report(config *Config, input chan *Stats) {
 	}
 	fmt.Fprintf(&buffer, "HTML transferred:       %d bytes\n", totalReceived)
 
-	if totalRequests > 0 && totalExecutionTime > 0 {
+	if responseTimeDataIdx > 0 && totalExecutionTime > 0 {
+		stdDevOfResponseTime := StdDev(responseTimeData[:responseTimeDataIdx]) / 1000000
+		sort.Sort(Int64Slice(responseTimeData))
+
+		meanOfResponseTime := int64(totalExecutionTime) / int64(totalRequests) / 1000000
+		medianOfResponseTime := responseTimeData[len(responseTimeData)/2] / 1000000
+		minResponseTime := responseTimeData[0] / 1000000
+		maxResponseTime := responseTimeData[len(responseTimeData)-1] / 1000000
+
 		fmt.Fprintf(&buffer, "Requests per second:    %.2f [#/sec] (mean)\n", float64(totalRequests)/totalExecutionTime.Seconds())
 		fmt.Fprintf(&buffer, "Time per request:       %.3f [ms] (mean)\n", float64(config.concurrency)*float64(totalExecutionTime.Nanoseconds())/1000000/float64(totalRequests))
 		fmt.Fprintf(&buffer, "Time per request:       %.3f [ms] (mean, across all concurrent requests)\n", float64(totalExecutionTime.Nanoseconds())/1000000/float64(totalRequests))
 		fmt.Fprintf(&buffer, "HTML Transfer rate:     %.2f [Kbytes/sec] received\n\n", float64(totalReceived/1024)/totalExecutionTime.Seconds())
+
+		fmt.Fprint(&buffer, "Connection Times (ms)\n")
+		fmt.Fprint(&buffer, "              min\tmean[+/-sd]\tmedian\tmax\n")
+		fmt.Fprintf(&buffer, "Total:        %d     \t%d   %.2f \t%d \t%d\n\n",
+			minResponseTime,
+			meanOfResponseTime,
+			stdDevOfResponseTime,
+			medianOfResponseTime,
+			maxResponseTime)
+
+		fmt.Fprintln(&buffer, "Percentage of the requests served within a certain time (ms)")
+
+		percentages := []int{50, 66, 75, 80, 90, 95, 98, 99}
+
+		for _, percentage := range percentages {
+			fmt.Fprintf(&buffer, " %d%%\t %d\n", percentage, responseTimeData[percentage*len(responseTimeData)/100]/1000000)
+		}
+		fmt.Fprintf(&buffer, " %d%%\t %d (longest request)\n", 100, maxResponseTime)
 	}
-	fmt.Fprint(&buffer, "Connection Times (ms)\n")
-	fmt.Fprint(&buffer, "              min\tmean[+/-sd]\tmedian\tmax\n")
-	fmt.Fprintf(&buffer, "Total:        %d     \t%d   %.2f \t%d \t%d\n\n",
-		minResponseTime,
-		meanOfResponseTime,
-		stdDevOfResponseTime,
-		medianOfResponseTime,
-		maxResponseTime)
-
-	fmt.Fprintln(&buffer, "Percentage of the requests served within a certain time (ms)")
-
-	percentages := []int{50, 66, 75, 80, 90, 95, 98, 99}
-
-	for _, percentage := range percentages {
-		fmt.Fprintf(&buffer, " %d%%\t %d\n", percentage, responseTimeData[percentage*len(responseTimeData)/100]/1000000)
-	}
-	fmt.Fprintf(&buffer, " %d%%\t %d (longest request)\n", 100, maxResponseTime)
-
 	fmt.Println(buffer.String())
 }
 
