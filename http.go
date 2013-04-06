@@ -179,6 +179,10 @@ func NewHttpRequest(config *Config) (*http.Request, error) {
 
 	request.Header.Set("Content-Type", config.contentType)
 
+	if config.keepAlive {
+		request.Header.Set("Connection", "keep-alive")
+	}
+
 	for _, header := range config.headers {
 		pair := strings.Split(header, ":")
 		request.Header.Add(pair[0], pair[1])

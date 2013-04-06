@@ -5,9 +5,9 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"log"
 	"net/url"
 	"os"
+	"regexp"
 	"runtime"
 	"strconv"
 	"strings"
@@ -67,7 +67,7 @@ func loadConfig() (config *Config, err error) {
 		flag.PrintDefaults()
 	}
 
-	if *help {
+	if *help || len(os.Args) == 1 {
 		flag.Usage()
 		os.Exit(0)
 	}
@@ -99,23 +99,33 @@ func loadConfig() (config *Config, err error) {
 	config.gzip = *gzip
 	config.basicAuthentication = *basicAuthentication
 
-	config.url = os.Args[len(os.Args)-1]
-	URL, err := url.Parse(config.url)
-	if err != nil {
-		return
-	}
-	config.host, config.port = extractHostAndPort(URL)
-
 	if config.requests < 1 || config.concurrency < 1 || config.timelimit < 0 || GoMaxProcs < 1 || Verbosity < 0 {
 		err = errors.New("wrong number of arguments")
+		return
 	}
 
 	if config.concurrency > config.requests {
 		err = errors.New("Cannot use concurrency level greater than total number of requests")
-
+		return
 	}
 
+	urlStr := os.Args[len(os.Args)-1]
+
+	matched := false
+	if matched, err = regexp.MatchString(`http.*?:\/\/([^\/?:#]*)`, urlStr); !matched {
+		err = errors.New(fmt.Sprintf("unsupported url scheme: %v", urlStr))
+		return
+	}
+
+	URL, err := url.Parse(urlStr)
+	if err != nil {
+		return
+	}
+	config.host, config.port = extractHostAndPort(URL)
+	config.url = urlStr
+
 	return
+
 }
 
 type stringSet []string
@@ -134,11 +144,8 @@ func extractHostAndPort(url *url.URL) (host string, port int) {
 	hostname := url.Host
 	pos := strings.LastIndex(hostname, ":")
 	if pos > 0 {
+		portInt64, _ := strconv.Atoi(hostname[pos+1:])
 		host = hostname[0:pos]
-		portInt64, err := strconv.Atoi(hostname[pos+1:])
-		if err != nil {
-			log.Fatal(err)
-		}
 		port = int(portInt64)
 	} else {
 		host = hostname
