@@ -7,46 +7,59 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
-
-type HttpWorker struct {
-	config    *Config
-	client    *http.Client
-	jobs      chan *http.Request
-	collector chan *Record
-	start     chan bool
-	stop      chan bool
-}
-
-func NewHttpWorker(config *Config, jobs chan *http.Request, collector chan *Record, start chan bool, stop chan bool) *HttpWorker {
-	return &HttpWorker{config, NewClient(config), jobs, collector, start, stop}
-}
 
 var (
 	invalidContnetSize = errors.New("invalid content size")
 )
 
+type LengthError error
+type ConnectError error
+type ReceiveError error
+type ExceptionError error
+type ResponseError error
+
+type HttpWorker struct {
+	config *Config
+	start  *sync.WaitGroup
+	stop   chan bool
+
+	client    *http.Client
+	jobs      chan *http.Request
+	collector chan *Record
+}
+
+func NewHttpWorker(config *Config, start *sync.WaitGroup, stop chan bool, jobs chan *http.Request, collector chan *Record) *HttpWorker {
+	return &HttpWorker{config, start, stop, NewClient(config), jobs, collector}
+}
+
 func (h *HttpWorker) Run() {
-	<-h.start
+	h.start.Done()
+	h.start.Wait()
 
 	for job := range h.jobs {
 
 		executionResult := make(chan *Record)
-
 		go h.send(job, executionResult)
+
+		timeout := time.NewTimer(time.Duration(MAX_RESPONSE_TIMEOUT) * time.Second)
 
 		select {
 		case record := <-executionResult:
 			h.collector <- record
 
-		case <-time.After(time.Duration(MAX_RESPONSE_TIMEOUT) * time.Second):
+		case <-timeout.C:
 			h.collector <- &Record{Error: errors.New("execution timeout")}
 
 		case <-h.stop:
+			timeout.Stop()
 			return
 		}
+		timeout.Stop()
 	}
 
 }
@@ -61,7 +74,7 @@ func (h *HttpWorker) send(request *http.Request, executionResult chan<- *Record)
 
 	defer func() {
 		if r := recover(); r != nil {
-			record.Error = &ExceptionError{errors.New(fmt.Sprint(r))}
+			record.Error = ExceptionError(errors.New(fmt.Sprint(r)))
 		} else {
 			record.contentSize = contentSize
 			record.responseTime = sw.Elapsed
@@ -76,33 +89,40 @@ func (h *HttpWorker) send(request *http.Request, executionResult chan<- *Record)
 
 	resp, err := h.client.Do(request)
 	if err != nil {
-		record.Error = &ConnectError{err}
+		record.Error = ConnectError(err)
 		return
 	} else {
 		defer resp.Body.Close()
 
 		if resp.StatusCode < 200 || resp.StatusCode > 300 {
-			record.Error = &ResponseError{err}
+			record.Error = ResponseError(err)
 			return
 		}
 
 		body, err := ioutil.ReadAll(resp.Body)
 
 		if err != nil {
-			record.Error = &ReceiveError{err}
+			record.Error = ReceiveError(err)
 			return
 		}
-		contentSize = len(body)
 
-		if contentSize != h.config.contentSize {
-			record.Error = &LengthError{invalidContnetSize}
+		expectedContentSize := 0
+		headerContentSize := resp.Header.Get("Content-Length")
+
+		if headerContentSize != "" {
+			expectedContentSize, _ = strconv.Atoi(headerContentSize)
+		} else {
+			expectedContentSize = h.config.contentSize
+		}
+
+		if expectedContentSize != len(body) {
+			record.Error = LengthError(invalidContnetSize)
 			return
 		}
 
 	}
 
 	sw.Stop()
-
 }
 
 func detectHost(config *Config) error {
@@ -128,7 +148,7 @@ func detectHost(config *Config) error {
 		defer resp.Body.Close()
 		body, _ := ioutil.ReadAll(resp.Body)
 
-		//TODO: another variable context
+		// TODO: place on another context
 		config.serverName = resp.Header.Get("Server")
 		config.contentSize = len(body)
 	}
@@ -138,14 +158,14 @@ func detectHost(config *Config) error {
 
 func NewClient(config *Config) *http.Client {
 
-	//skip certification check for self-signed certificates
+	// skip certification check for self-signed certificates
 	tlsconfig := &tls.Config{
 		InsecureSkipVerify: true,
 	}
 
-	//TODO: timeout control
-	//TODO: tcp options
-	//TODO: monitor tcp metrics
+	// TODO: timeout control
+	// TODO: tcp options
+	// TODO: monitor tcp metrics
 	transport := &http.Transport{
 		DisableCompression: !config.gzip,
 		DisableKeepAlives:  !config.keepAlive,
@@ -162,7 +182,7 @@ func NewHttpRequest(config *Config) (*http.Request, error) {
 	var err error
 
 	if (config.method == "POST" || config.method == "PUT") && config.bodyFile != "" {
-		//THINK: cache small file
+		// THINK: cache small file
 		bytes, err := ioutil.ReadFile(config.bodyFile)
 		if err != nil {
 			return nil, err
@@ -201,44 +221,4 @@ func NewHttpRequest(config *Config) (*http.Request, error) {
 
 	request.Header.Add("User-Agent", config.userAgent)
 	return request, err
-}
-
-type LengthError struct {
-	err error
-}
-
-func (e *LengthError) Error() string {
-	return e.err.Error()
-}
-
-type ConnectError struct {
-	err error
-}
-
-func (e *ConnectError) Error() string {
-	return e.err.Error()
-}
-
-type ReceiveError struct {
-	err error
-}
-
-func (e *ReceiveError) Error() string {
-	return e.err.Error()
-}
-
-type ExceptionError struct {
-	err error
-}
-
-func (e *ExceptionError) Error() string {
-	return e.err.Error()
-}
-
-type ResponseError struct {
-	err error
-}
-
-func (e *ResponseError) Error() string {
-	return e.err.Error()
 }

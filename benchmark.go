@@ -2,15 +2,16 @@ package main
 
 import (
 	"net/http"
+	"sync"
 	"time"
 )
 
 type Benchmark struct {
-	config    *Config
+	config *Config
+	start  *sync.WaitGroup
+	stop   chan bool
+
 	collector chan *Record
-	monitor   *Monitor
-	start     chan bool
-	stop      chan bool
 }
 
 type Record struct {
@@ -19,24 +20,17 @@ type Record struct {
 	Error        error
 }
 
-func NewBenchmark(config *Config) *Benchmark {
-	start := make(chan bool)
-	stop := make(chan bool)
-
+func NewBenchmark(config *Config, start *sync.WaitGroup, stop chan bool) *Benchmark {
 	collector := make(chan *Record, config.requests)
-	monitor := NewMonitor(config, collector, start, stop)
-
-	return &Benchmark{config, collector, monitor, start, stop}
+	return &Benchmark{config, start, stop, collector}
 }
 
 func (b *Benchmark) Run() {
 
-	go b.monitor.Run()
-
 	jobs := make(chan *http.Request, b.config.requests)
 
 	for i := 0; i < b.config.concurrency; i++ {
-		go NewHttpWorker(b.config, jobs, b.collector, b.start, b.stop).Run()
+		go NewHttpWorker(b.config, b.start, b.stop, jobs, b.collector).Run()
 	}
 
 	for i := 0; i < b.config.requests; i++ {
@@ -44,6 +38,5 @@ func (b *Benchmark) Run() {
 		jobs <- request
 	}
 
-	close(b.start)
 	<-b.stop
 }

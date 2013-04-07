@@ -4,15 +4,17 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"sync"
 	"time"
 )
 
 type Monitor struct {
-	config    *Config
+	config *Config
+	start  *sync.WaitGroup
+	stop   chan bool
+
 	collector chan *Record
 	output    chan *Stats
-	start     chan bool
-	stop      chan bool
 }
 
 type Stats struct {
@@ -32,8 +34,8 @@ type Stats struct {
 	errResponse         int
 }
 
-func NewMonitor(config *Config, collector chan *Record, start chan bool, stop chan bool) *Monitor {
-	return &Monitor{config, collector, make(chan *Stats), start, stop}
+func NewMonitor(config *Config, start *sync.WaitGroup, stop chan bool, benchmark *Benchmark) *Monitor {
+	return &Monitor{config, start, stop, benchmark.collector, make(chan *Stats)}
 }
 
 func (m *Monitor) Run() {
@@ -41,19 +43,19 @@ func (m *Monitor) Run() {
 	userInterrupt := make(chan os.Signal, 1)
 	signal.Notify(userInterrupt, os.Interrupt)
 
-	<-m.start
-
 	stats := &Stats{}
 	stats.responseTimeData = make([]int64, m.config.requests)
 	stats.responseTimeDataIdx = 0
 
+	m.start.Wait()
 	sw := &StopWatch{}
 	sw.Start()
 
-	var timelimit <-chan time.Time
+	var timelimit time.Timer
 	if m.config.timelimit > 0 {
-		timelimit = time.After(time.Duration(m.config.timelimit) * time.Second)
+		timelimit = *time.NewTimer(time.Duration(m.config.timelimit) * time.Second)
 	}
+	defer timelimit.Stop()
 
 	fmt.Printf("Benchmarking %s (be patient)\n", m.config.host)
 
@@ -77,7 +79,7 @@ loop:
 				break loop
 			}
 
-		case <-timelimit:
+		case <-timelimit.C:
 			break loop
 		case <-userInterrupt:
 			break loop
@@ -87,7 +89,7 @@ loop:
 	sw.Stop()
 	stats.totalExecutionTime = sw.Elapsed
 
-	//to notify benchmark and all of httpworkers stop running
+	// to notify benchmark and all of httpworkers stop running
 	close(m.stop)
 	m.output <- stats
 }
@@ -99,15 +101,15 @@ func updateStats(stats *Stats, record *Record) {
 		stats.totalFailedReqeusts += 1
 
 		switch record.Error.(type) {
-		case *ConnectError:
+		case ConnectError:
 			stats.errConnect += 1
-		case *ExceptionError:
+		case ExceptionError:
 			stats.errException += 1
-		case *LengthError:
+		case LengthError:
 			stats.errLength += 1
-		case *ReceiveError:
+		case ReceiveError:
 			stats.errReceive += 1
-		case *ResponseError:
+		case ResponseError:
 			stats.errResponse += 1
 		default:
 			stats.errException += 1

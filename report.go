@@ -8,8 +8,15 @@ import (
 	"sort"
 )
 
-func report(config *Config, input chan *Stats) {
-	stats := <-input
+func printHeader() {
+	fmt.Println(`
+This is GoHttpBench, Version ` + GB_VERSION + `, https://github.com/parkghost/gohttpbench
+Author: Brandon Chen, Email: parkghost@gmail.com
+Licensed under the Apache License, Version 2.0
+`)
+}
+
+func printReport(config *Config, stats *Stats) {
 
 	var buffer bytes.Buffer
 
@@ -37,7 +44,7 @@ func report(config *Config, input chan *Stats) {
 		fmt.Fprintln(&buffer, "Failed requests:        0")
 	} else {
 		fmt.Fprintf(&buffer, "Failed requests:        %d\n", totalFailedReqeusts)
-		fmt.Fprintf(&buffer, "   (Connect: %d, Receive: %d, Length: %d, Exceptions: %d\n", stats.errConnect, stats.errReceive, stats.errLength, stats.errException)
+		fmt.Fprintf(&buffer, "   (Connect: %d, Receive: %d, Length: %d, Exceptions: %d)\n", stats.errConnect, stats.errReceive, stats.errLength, stats.errException)
 	}
 	if stats.errResponse > 0 {
 		fmt.Fprintf(&buffer, "Non-2xx responses:      %d\n", stats.errResponse)
@@ -79,14 +86,14 @@ func report(config *Config, input chan *Stats) {
 	fmt.Println(buffer.String())
 }
 
-//custom sortable []int64 data type
+// custom sortable []int64 data type
 type Int64Slice []int64
 
 func (s Int64Slice) Len() int           { return len(s) }
 func (s Int64Slice) Less(i, j int) bool { return s[i] < s[j] }
 func (s Int64Slice) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 
-//calculate standard deviation
+// calculate standard deviation
 func StdDev(data []int64) float64 {
 	var sum int64 = 0
 	for _, i := range data {
