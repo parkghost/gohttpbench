@@ -37,9 +37,9 @@ Options are:
 ```
 
 ### Example:
-	$ gb -c 1000 -n 100000 -k http://localhost:8080/
+	$ gb -c 1000 -n 100000 -k http://localhost/
 
-	This is GoHttpBench, Version 0.1.0, https://github.com/parkghost/gohttpbench
+	This is GoHttpBench, Version 0.1.1, https://github.com/parkghost/gohttpbench
 	Author: Brandon Chen, Email: parkghost@gmail.com
 	Licensed under the Apache License, Version 2.0
 
@@ -57,38 +57,37 @@ Options are:
 	Finished 100000 requests
 
 
-	Server Software:        GoWeb/0.1.0
+	Server Software:        nginx/1.2.1
 	Server Hostname:        localhost
-	Server Port:            8080
+	Server Port:            80
 
 	Document Path:          /
-	Document Length:        291 bytes
+	Document Length:        151 bytes
 
 	Concurrency Level:      1000
-	Time taken for tests:   8.37 seconds
+	Time taken for tests:   5.78 seconds
 	Complete requests:      100000
 	Failed requests:        0
-	HTML transferred:       29100000 bytes
-	Requests per second:    11951.57 [#/sec] (mean)
-	Time per request:       83.671 [ms] (mean)
-	Time per request:       0.084 [ms] (mean, across all concurrent requests)
-	HTML Transfer rate:     3396.28 [Kbytes/sec] received
+	HTML transferred:       0 bytes
+	Requests per second:    17315.76 [#/sec] (mean)
+	Time per request:       57.751 [ms] (mean)
+	Time per request:       0.058 [ms] (mean, across all concurrent requests)
+	HTML Transfer rate:     0.00 [Kbytes/sec] received
 
 	Connection Times (ms)
 	              min	mean[+/-sd]	median	max
-	Total:        1     	0   50.90 	72 	1302
+	Total:        0     	0   34.35 	47 	531
 
 	Percentage of the requests served within a certain time (ms)
-	 50%	 72
-	 66%	 76
-	 75%	 81
-	 80%	 84
-	 90%	 94
-	 95%	 114
-	 98%	 164
+	 50%	 47
+	 66%	 54
+	 75%	 59
+	 80%	 63
+	 90%	 78
+	 95%	 102
+	 98%	 141
 	 99%	 189
-	 100%	 1302 (longest request)
-
+	 100%	 531 (longest request)
 
 Authors
 -------
