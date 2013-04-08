@@ -43,13 +43,11 @@ func (h *HttpWorker) Run() {
 
 	for job := range h.jobs {
 
-		executionResult := make(chan *Record)
-		go h.send(job, executionResult)
-
+		asyncResult := h.send(job)
 		timeout := time.NewTimer(time.Duration(MAX_RESPONSE_TIMEOUT) * time.Second)
 
 		select {
-		case record := <-executionResult:
+		case record := <-asyncResult:
 			h.collector <- record
 
 		case <-timeout.C:
@@ -61,68 +59,71 @@ func (h *HttpWorker) Run() {
 		}
 		timeout.Stop()
 	}
-
 }
 
-func (h *HttpWorker) send(request *http.Request, executionResult chan<- *Record) {
+func (h *HttpWorker) send(request *http.Request) (asyncResult chan *Record) {
 
-	record := &Record{}
-	sw := &StopWatch{}
-	sw.Start()
+	asyncResult = make(chan *Record)
+	go func() {
+		record := &Record{}
+		sw := &StopWatch{}
+		sw.Start()
 
-	var contentSize int
+		var contentSize int
 
-	defer func() {
-		if r := recover(); r != nil {
-			record.Error = ExceptionError(errors.New(fmt.Sprint(r)))
-		} else {
-			record.contentSize = contentSize
-			record.responseTime = sw.Elapsed
-		}
+		defer func() {
+			if r := recover(); r != nil {
+				record.Error = ExceptionError(errors.New(fmt.Sprint(r)))
+			} else {
+				record.contentSize = contentSize
+				record.responseTime = sw.Elapsed
+			}
 
-		if record.Error != nil {
-			TraceException(record.Error)
-		}
+			if record.Error != nil {
+				TraceException(record.Error)
+			}
 
-		executionResult <- record
-	}()
+			asyncResult <- record
+		}()
 
-	resp, err := h.client.Do(request)
-	if err != nil {
-		record.Error = ConnectError(err)
-		return
-	} else {
-		defer resp.Body.Close()
-
-		if resp.StatusCode < 200 || resp.StatusCode > 300 {
-			record.Error = ResponseError(err)
-			return
-		}
-
-		body, err := ioutil.ReadAll(resp.Body)
-
+		resp, err := h.client.Do(request)
 		if err != nil {
-			record.Error = ReceiveError(err)
+			record.Error = ConnectError(err)
 			return
-		}
-
-		expectedContentSize := 0
-		headerContentSize := resp.Header.Get("Content-Length")
-
-		if headerContentSize != "" {
-			expectedContentSize, _ = strconv.Atoi(headerContentSize)
 		} else {
-			expectedContentSize = h.config.contentSize
+			defer resp.Body.Close()
+
+			if resp.StatusCode < 200 || resp.StatusCode > 300 {
+				record.Error = ResponseError(err)
+				return
+			}
+
+			body, err := ioutil.ReadAll(resp.Body)
+
+			if err != nil {
+				record.Error = ReceiveError(err)
+				return
+			}
+
+			expectedContentSize := 0
+			headerContentSize := resp.Header.Get("Content-Length")
+
+			if headerContentSize != "" {
+				expectedContentSize, _ = strconv.Atoi(headerContentSize)
+			} else {
+				expectedContentSize = h.config.contentSize
+			}
+
+			if expectedContentSize != len(body) {
+				record.Error = LengthError(invalidContnetSize)
+				return
+			}
+
 		}
 
-		if expectedContentSize != len(body) {
-			record.Error = LengthError(invalidContnetSize)
-			return
-		}
-
-	}
-
-	sw.Stop()
+		sw.Stop()
+	}()
+	return asyncResult
 }
 
 func detectHost(config *Config) error {
