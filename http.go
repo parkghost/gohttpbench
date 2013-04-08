@@ -199,6 +199,7 @@ func NewHttpRequest(config *Config) (*http.Request, error) {
 	}
 
 	request.Header.Set("Content-Type", config.contentType)
+	request.Header.Set("User-Agent", config.userAgent)
 
 	if config.keepAlive {
 		request.Header.Set("Connection", "keep-alive")
@@ -220,6 +221,5 @@ func NewHttpRequest(config *Config) (*http.Request, error) {
 		request.SetBasicAuth(pair[0], pair[1])
 	}
 
-	request.Header.Add("User-Agent", config.userAgent)
 	return request, err
 }
