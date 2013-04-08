@@ -17,7 +17,7 @@ Usage
 -----------
 
 ```
-Usage: gb [options] [http[s]://]hostname[:port]/path
+Usage: gb [options] http[s]://hostname[:port]/path
 Options are:
   -A="": Add Basic WWW Authentication, the attributes are a colon separated username and password.
   -C=[]: Add cookie, eg. 'Apache=1234. (repeatable)
