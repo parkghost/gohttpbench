@@ -15,7 +15,7 @@ func TestStopWatch(t *testing.T) {
 		sw.Stop()
 
 		if int64(sw.Elapsed)/1000000 == int64(time.Duration(value)*time.Second) {
-			t.Errorf("expected %d, get", time.Duration(value)*time.Second, sw.Elapsed)
+			t.Errorf("expected %d, get %d", time.Duration(value)*time.Second, sw.Elapsed)
 		}
 	}
 
