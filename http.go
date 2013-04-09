@@ -73,7 +73,12 @@ func (h *HttpWorker) send(request *http.Request) (asyncResult chan *Record) {
 
 		defer func() {
 			if r := recover(); r != nil {
-				record.Error = ExceptionError(errors.New(fmt.Sprint(r)))
+				if Err, ok := r.(error); ok {
+					record.Error = Err
+				} else {
+					record.Error = ExceptionError(errors.New(fmt.Sprint(r)))
+				}
+
 			} else {
 				record.contentSize = contentSize
 				record.responseTime = sw.Elapsed
