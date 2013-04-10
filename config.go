@@ -4,6 +4,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"net/url"
 	"os"
 	"regexp"
@@ -18,7 +19,7 @@ type Config struct {
 	timelimit   int
 
 	method              string
-	bodyFile            string
+	bodyFile            []byte
 	contentType         string
 	headers             []string
 	cookies             []string
@@ -79,15 +80,21 @@ func loadConfig() (config *Config, err error) {
 	config.requests = *request
 	config.concurrency = *concurrency
 
-	if *postFile == "" || *putFile == "" {
+	filename := ""
+	if *postFile == "" && *putFile == "" {
 		config.method = "GET"
 	} else if *postFile != "" {
 		config.method = "POST"
-		config.bodyFile = *postFile
-
+		filename = *postFile
 	} else if *putFile != "PUT" {
 		config.method = "PUT"
-		config.bodyFile = *putFile
+		filename = *putFile
+	}
+
+	if filename != "" {
+		if err = loadFile(config, filename); err != nil {
+			return
+		}
 	}
 
 	if *timelimit > 0 {
@@ -126,6 +133,16 @@ func loadConfig() (config *Config, err error) {
 
 	return
 
+}
+
+func loadFile(config *Config, filename string) error {
+	bytes, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return err
+	} else {
+		config.bodyFile = bytes
+	}
+	return nil
 }
 
 type stringSet []string

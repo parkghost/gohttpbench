@@ -16,7 +16,7 @@ type Benchmark struct {
 
 type Record struct {
 	responseTime time.Duration
-	contentSize  int
+	contentSize  int64
 	Error        error
 }
 

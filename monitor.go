@@ -24,7 +24,7 @@ type Stats struct {
 	totalRequests      int
 	totalExecutionTime time.Duration
 	totalResponseTime  time.Duration
-	totalReceived      int
+	totalReceived      int64
 
 	totalFailedReqeusts int
 	errLength           int

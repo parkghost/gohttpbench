@@ -32,11 +32,10 @@ type HttpWorker struct {
 	client    *http.Client
 	jobs      chan *http.Request
 	collector chan *Record
-	readBuf   *bytes.Buffer
 }
 
 func NewHttpWorker(config *Config, start *sync.WaitGroup, stop chan bool, jobs chan *http.Request, collector chan *Record) *HttpWorker {
-	return &HttpWorker{config, start, stop, NewClient(config), jobs, collector, bytes.NewBuffer(make([]byte, 0, bytes.MinRead))}
+	return &HttpWorker{config, start, stop, NewClient(config), jobs, collector}
 }
 
 func (h *HttpWorker) Run() {
@@ -71,7 +70,7 @@ func (h *HttpWorker) send(request *http.Request) (asyncResult chan *Record) {
 		sw := &StopWatch{}
 		sw.Start()
 
-		var contentSize int
+		var contentSize int64
 
 		defer func() {
 			if r := recover(); r != nil {
@@ -105,8 +104,7 @@ func (h *HttpWorker) send(request *http.Request) (asyncResult chan *Record) {
 				return
 			}
 
-			defer h.readBuf.Reset()
-			contentSize, err := h.readBuf.ReadFrom(resp.Body)
+			contentSize, err = io.Copy(ioutil.Discard, resp.Body)
 
 			if err != nil {
 				record.Error = ReceiveError(err)
@@ -159,7 +157,13 @@ func detectHost(config *Config) error {
 
 		// TODO: place on another context
 		config.serverName = resp.Header.Get("Server")
-		config.contentSize = len(body)
+		headerContentSize := resp.Header.Get("Content-Length")
+
+		if headerContentSize != "" {
+			config.contentSize, _ = strconv.Atoi(headerContentSize)
+		} else {
+			config.contentSize = len(body)
+		}
 	}
 
 	return nil
@@ -190,14 +194,9 @@ func NewHttpRequest(config *Config) (*http.Request, error) {
 	var body io.Reader
 	var err error
 
-	if (config.method == "POST" || config.method == "PUT") && config.bodyFile != "" {
-		// THINK: cache small file
-		bytes, err := ioutil.ReadFile(config.bodyFile)
-		if err != nil {
-			return nil, err
-		}
+	if (config.method == "POST" || config.method == "PUT") && config.bodyFile != nil {
 
-		body = strings.NewReader(string(bytes))
+		body = bytes.NewReader(config.bodyFile)
 	}
 
 	request, err := http.NewRequest(config.method, config.url, body)
@@ -206,7 +205,12 @@ func NewHttpRequest(config *Config) (*http.Request, error) {
 		return nil, err
 	}
 
-	request.Header.Set("Content-Type", config.contentType)
+	if body != nil && config.contentType == "text/plain" {
+		request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	} else {
+		request.Header.Set("Content-Type", config.contentType)
+	}
+
 	request.Header.Set("User-Agent", config.userAgent)
 
 	if config.keepAlive {
