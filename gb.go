@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	GB_VERSION           = "0.1.1"
+	GB_VERSION           = "0.1.2"
 	MAX_RESPONSE_TIMEOUT = 30
 	MAX_REQUESTS         = 50000 // if enable timelimit and without setting reqeusts
 )

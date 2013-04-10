@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"crypto/tls"
 	"errors"
 	"fmt"
@@ -40,10 +41,11 @@ func NewHttpWorker(config *Config, start *sync.WaitGroup, stop chan bool, jobs c
 func (h *HttpWorker) Run() {
 	h.start.Done()
 	h.start.Wait()
+	readbuf := bytes.NewBuffer(make([]byte, 0, bytes.MinRead))
 
 	for job := range h.jobs {
 
-		asyncResult := h.send(job)
+		asyncResult := h.send(job, readbuf)
 		timeout := time.NewTimer(time.Duration(MAX_RESPONSE_TIMEOUT) * time.Second)
 
 		select {
@@ -61,7 +63,7 @@ func (h *HttpWorker) Run() {
 	}
 }
 
-func (h *HttpWorker) send(request *http.Request) (asyncResult chan *Record) {
+func (h *HttpWorker) send(request *http.Request, readBuf *bytes.Buffer) (asyncResult chan *Record) {
 
 	asyncResult = make(chan *Record)
 	go func() {
@@ -103,7 +105,8 @@ func (h *HttpWorker) send(request *http.Request) (asyncResult chan *Record) {
 				return
 			}
 
-			body, err := ioutil.ReadAll(resp.Body)
+			defer readBuf.Reset()
+			contentSize, err := readBuf.ReadFrom(resp.Body)
 
 			if err != nil {
 				record.Error = ReceiveError(err)
@@ -119,7 +122,7 @@ func (h *HttpWorker) send(request *http.Request) (asyncResult chan *Record) {
 				expectedContentSize = h.config.contentSize
 			}
 
-			if expectedContentSize != len(body) {
+			if int64(expectedContentSize) != contentSize {
 				record.Error = LengthError(invalidContnetSize)
 				return
 			}

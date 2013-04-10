@@ -1,4 +1,5 @@
 temp/
+raw/
 *.sh
 *.csv
 *.pprof
