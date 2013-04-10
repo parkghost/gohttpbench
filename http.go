@@ -32,20 +32,20 @@ type HttpWorker struct {
 	client    *http.Client
 	jobs      chan *http.Request
 	collector chan *Record
+	readBuf   *bytes.Buffer
 }
 
 func NewHttpWorker(config *Config, start *sync.WaitGroup, stop chan bool, jobs chan *http.Request, collector chan *Record) *HttpWorker {
-	return &HttpWorker{config, start, stop, NewClient(config), jobs, collector}
+	return &HttpWorker{config, start, stop, NewClient(config), jobs, collector, bytes.NewBuffer(make([]byte, 0, bytes.MinRead))}
 }
 
 func (h *HttpWorker) Run() {
 	h.start.Done()
 	h.start.Wait()
-	readbuf := bytes.NewBuffer(make([]byte, 0, bytes.MinRead))
 
 	for job := range h.jobs {
 
-		asyncResult := h.send(job, readbuf)
+		asyncResult := h.send(job)
 		timeout := time.NewTimer(time.Duration(MAX_RESPONSE_TIMEOUT) * time.Second)
 
 		select {
@@ -63,7 +63,7 @@ func (h *HttpWorker) Run() {
 	}
 }
 
-func (h *HttpWorker) send(request *http.Request, readBuf *bytes.Buffer) (asyncResult chan *Record) {
+func (h *HttpWorker) send(request *http.Request) (asyncResult chan *Record) {
 
 	asyncResult = make(chan *Record)
 	go func() {
@@ -105,8 +105,8 @@ func (h *HttpWorker) send(request *http.Request, readBuf *bytes.Buffer) (asyncRe
 				return
 			}
 
-			defer readBuf.Reset()
-			contentSize, err := readBuf.ReadFrom(resp.Body)
+			defer h.readBuf.Reset()
+			contentSize, err := h.readBuf.ReadFrom(resp.Body)
 
 			if err != nil {
 				record.Error = ReceiveError(err)

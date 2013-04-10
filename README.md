@@ -10,7 +10,7 @@ Installation
 
 ```
 go get github.com/parkghost/gohttpbench
-go build -o bin/gb github.com/parkghost/gohttpbench
+go build -o gb github.com/parkghost/gohttpbench
 ```
 
 Usage
@@ -39,7 +39,7 @@ Options are:
 ### Example:
 	$ gb -c 1000 -n 100000 -k http://localhost/
 
-	This is GoHttpBench, Version 0.1.1, https://github.com/parkghost/gohttpbench
+	This is GoHttpBench, Version 0.1.2, https://github.com/parkghost/gohttpbench
 	Author: Brandon Chen, Email: parkghost@gmail.com
 	Licensed under the Apache License, Version 2.0
 
@@ -65,29 +65,29 @@ Options are:
 	Document Length:        151 bytes
 
 	Concurrency Level:      1000
-	Time taken for tests:   5.78 seconds
+	Time taken for tests:   4.94 seconds
 	Complete requests:      100000
 	Failed requests:        0
 	HTML transferred:       0 bytes
-	Requests per second:    17315.76 [#/sec] (mean)
-	Time per request:       57.751 [ms] (mean)
-	Time per request:       0.058 [ms] (mean, across all concurrent requests)
+	Requests per second:    20230.47 [#/sec] (mean)
+	Time per request:       49.430 [ms] (mean)
+	Time per request:       0.049 [ms] (mean, across all concurrent requests)
 	HTML Transfer rate:     0.00 [Kbytes/sec] received
 
 	Connection Times (ms)
 	              min	mean[+/-sd]	median	max
-	Total:        0     	0   34.35 	47 	531
+	Total:        3     	0   18.09 	43 	187
 
 	Percentage of the requests served within a certain time (ms)
-	 50%	 47
-	 66%	 54
-	 75%	 59
-	 80%	 63
-	 90%	 78
-	 95%	 102
-	 98%	 141
-	 99%	 189
-	 100%	 531 (longest request)
+	 50%	 43
+	 66%	 47
+	 75%	 51
+	 80%	 54
+	 90%	 66
+	 95%	 78
+	 98%	 99
+	 99%	 124
+	 100%	 187 (longest request)
 
 Authors
 -------
