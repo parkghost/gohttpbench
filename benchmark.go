@@ -33,9 +33,9 @@ func (b *Benchmark) Run() {
 		go NewHttpWorker(b.config, b.start, b.stop, jobs, b.collector).Run()
 	}
 
+	base, _ := NewHttpRequest(b.config)
 	for i := 0; i < b.config.requests; i++ {
-		request, _ := NewHttpRequest(b.config)
-		jobs <- request
+		jobs <- CopyHttpRequest(b.config, base)
 	}
 
 	<-b.stop

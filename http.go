@@ -40,6 +40,7 @@ func (h *HttpWorker) Run() {
 	for job := range h.jobs {
 
 		asyncResult := h.send(job)
+		// TODO: use timer.Reset(d) instead of create new timer (Go 1.1)
 		timeout := time.NewTimer(time.Duration(MAX_RESPONSE_TIMEOUT) * time.Second)
 
 		select {
@@ -228,6 +229,19 @@ func NewHttpRequest(config *Config) (*http.Request, error) {
 	}
 
 	return request, err
+}
+
+func CopyHttpRequest(config *Config, request *http.Request) *http.Request {
+
+	if config.method != "POST" || config.method != "PUT" {
+		return request
+	}
+
+	newRequest := *request
+	if newRequest.Body != nil {
+		newRequest.Body = ioutil.NopCloser(bytes.NewReader(config.bodyFile))
+	}
+	return &newRequest
 }
 
 type LengthError struct {
