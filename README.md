@@ -26,6 +26,7 @@ Options are:
   -T="text/plain": Content-type header for POSTing, eg. 'application/x-www-form-urlencoded' Default is 'text/plain'
   -c=1: Number of multiple requests to make
   -h=false: Display usage information (this message)
+  -i=false: Use HEAD instead of GET
   -k=false: Use HTTP KeepAlive feature
   -n=1: Number of requests to perform
   -p="": File containing data to POST. Remember also to set -T
@@ -88,7 +89,7 @@ Options are:
 	 98%	 104
 	 99%	 138
 	 100%	 207 (longest request)
-	 
+
 Authors
 -------
 
