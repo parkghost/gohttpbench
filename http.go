@@ -36,7 +36,7 @@ type HttpWorker struct {
 }
 
 func NewHttpWorker(config *Config, start *sync.WaitGroup, stop chan bool, jobs chan *http.Request, collector chan *Record) *HttpWorker {
-	return &HttpWorker{config, start, stop, NewClient(config), jobs, collector, bytes.NewBuffer(make([]byte, 0, bytes.MinRead))}
+	return &HttpWorker{config, start, stop, NewClient(config), jobs, collector, bytes.NewBuffer(make([]byte, 0, config.contentSize+bytes.MinRead))}
 }
 
 func (h *HttpWorker) Run() {
@@ -104,6 +104,7 @@ func (h *HttpWorker) send(request *http.Request) (asyncResult chan *Record) {
 				record.Error = ResponseError(err)
 				return
 			}
+
 			defer h.readBuf.Reset()
 			contentSize, err := h.readBuf.ReadFrom(resp.Body)
 			if err != nil {
@@ -113,7 +114,6 @@ func (h *HttpWorker) send(request *http.Request) (asyncResult chan *Record) {
 
 			expectedContentSize := 0
 			headerContentSize := resp.Header.Get("Content-Length")
-
 			if headerContentSize != "" {
 				expectedContentSize, _ = strconv.Atoi(headerContentSize)
 			} else {
