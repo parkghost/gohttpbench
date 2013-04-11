@@ -191,9 +191,9 @@ func NewHttpRequest(config *Config) (*http.Request, error) {
 	var body io.Reader
 	var err error
 
-	if (config.method == "POST" || config.method == "PUT") && config.bodyFile != nil {
+	if (config.method == "POST" || config.method == "PUT") && config.bodyContent != nil {
 
-		body = bytes.NewReader(config.bodyFile)
+		body = bytes.NewReader(config.bodyContent)
 	}
 
 	request, err := http.NewRequest(config.method, config.url, body)
@@ -241,7 +241,7 @@ func CopyHttpRequest(config *Config, request *http.Request) *http.Request {
 
 	newRequest := *request
 	if newRequest.Body != nil {
-		newRequest.Body = ioutil.NopCloser(bytes.NewReader(config.bodyFile))
+		newRequest.Body = ioutil.NopCloser(bytes.NewReader(config.bodyContent))
 	}
 	return &newRequest
 }

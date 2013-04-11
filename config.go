@@ -19,7 +19,7 @@ type Config struct {
 	timelimit   int
 
 	method              string
-	bodyFile            []byte
+	bodyContent         []byte
 	contentType         string
 	headers             []string
 	cookies             []string
@@ -121,7 +121,7 @@ func loadConfig() (config *Config, err error) {
 		fmt.Printf("dump config: %#+v\n", config)
 	}
 
-	// validate configuration 
+	// validate configuration
 	if config.requests < 1 || config.concurrency < 1 || config.timelimit < 0 || GoMaxProcs < 1 || Verbosity < 0 {
 		err = errors.New("wrong number of arguments")
 		return
@@ -141,7 +141,7 @@ func loadFile(config *Config, filename string) error {
 	if err != nil {
 		return err
 	} else {
-		config.bodyFile = bytes
+		config.bodyContent = bytes
 	}
 	return nil
 }
