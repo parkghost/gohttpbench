@@ -48,6 +48,7 @@ func loadConfig() (config *Config, err error) {
 
 	postFile := flag.String("p", "", "File containing data to POST. Remember also to set -T")
 	putFile := flag.String("u", "", "File containing data to PUT. Remember also to set -T")
+	headMethod := flag.Bool("i", false, "Use HEAD instead of GET")
 	contentType := flag.String("T", "text/plain", "Content-type header for POSTing, eg. 'application/x-www-form-urlencoded' Default is 'text/plain'")
 
 	var headers, cookies stringSet
@@ -80,21 +81,21 @@ func loadConfig() (config *Config, err error) {
 	config.requests = *request
 	config.concurrency = *concurrency
 
-	filename := ""
-	if *postFile == "" && *putFile == "" {
-		config.method = "GET"
-	} else if *postFile != "" {
+	switch {
+	case *postFile == "POST":
 		config.method = "POST"
-		filename = *postFile
-	} else if *putFile != "PUT" {
-		config.method = "PUT"
-		filename = *putFile
-	}
-
-	if filename != "" {
-		if err = loadFile(config, filename); err != nil {
+		if err = loadFile(config, *postFile); err != nil {
 			return
 		}
+	case *putFile == "PUT":
+		config.method = "PUT"
+		if err = loadFile(config, *putFile); err != nil {
+			return
+		}
+	case *headMethod:
+		config.method = "HEAD"
+	default:
+		config.method = "GET"
 	}
 
 	if *timelimit > 0 {
