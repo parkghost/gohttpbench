@@ -101,7 +101,9 @@ func (h *HttpWorker) send(request *http.Request) (asyncResult chan *Record) {
 			}
 
 			defer h.readBuf.Reset()
-			contentSize, err := h.readBuf.ReadFrom(resp.Body)
+			var err error
+			contentSize, err = h.readBuf.ReadFrom(resp.Body)
+
 			if err != nil {
 				record.Error = &ReceiveError{err}
 				return
