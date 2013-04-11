@@ -18,12 +18,6 @@ var (
 	invalidContnetSize = errors.New("invalid content size")
 )
 
-type LengthError error
-type ConnectError error
-type ReceiveError error
-type ExceptionError error
-type ResponseError error
-
 type HttpWorker struct {
 	config *Config
 	start  *sync.WaitGroup
@@ -78,7 +72,7 @@ func (h *HttpWorker) send(request *http.Request) (asyncResult chan *Record) {
 				if Err, ok := r.(error); ok {
 					record.Error = Err
 				} else {
-					record.Error = ExceptionError(errors.New(fmt.Sprint(r)))
+					record.Error = &ExceptionError{errors.New(fmt.Sprint(r))}
 				}
 
 			} else {
@@ -95,20 +89,20 @@ func (h *HttpWorker) send(request *http.Request) (asyncResult chan *Record) {
 
 		resp, err := h.client.Do(request)
 		if err != nil {
-			record.Error = ConnectError(err)
+			record.Error = &ConnectError{err}
 			return
 		} else {
 			defer resp.Body.Close()
 
 			if resp.StatusCode < 200 || resp.StatusCode > 300 {
-				record.Error = ResponseError(err)
+				record.Error = &ResponseError{err}
 				return
 			}
 
 			defer h.readBuf.Reset()
 			contentSize, err := h.readBuf.ReadFrom(resp.Body)
 			if err != nil {
-				record.Error = ReceiveError(err)
+				record.Error = &ReceiveError{err}
 				return
 			}
 
@@ -120,8 +114,8 @@ func (h *HttpWorker) send(request *http.Request) (asyncResult chan *Record) {
 				expectedContentSize = h.config.contentSize
 			}
 
-			if int64(expectedContentSize) != contentSize {
-				record.Error = LengthError(invalidContnetSize)
+			if h.config.method != "HEAD" && int64(expectedContentSize) != contentSize {
+				record.Error = &LengthError{invalidContnetSize}
 				return
 			}
 
@@ -234,4 +228,44 @@ func NewHttpRequest(config *Config) (*http.Request, error) {
 	}
 
 	return request, err
+}
+
+type LengthError struct {
+	err error
+}
+
+func (e *LengthError) Error() string {
+	return e.err.Error()
+}
+
+type ConnectError struct {
+	err error
+}
+
+func (e *ConnectError) Error() string {
+	return e.err.Error()
+}
+
+type ReceiveError struct {
+	err error
+}
+
+func (e *ReceiveError) Error() string {
+	return e.err.Error()
+}
+
+type ExceptionError struct {
+	err error
+}
+
+func (e *ExceptionError) Error() string {
+	return e.err.Error()
+}
+
+type ResponseError struct {
+	err error
+}
+
+func (e *ResponseError) Error() string {
+	return e.err.Error()
 }

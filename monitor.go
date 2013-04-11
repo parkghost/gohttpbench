@@ -101,15 +101,15 @@ func updateStats(stats *Stats, record *Record) {
 		stats.totalFailedReqeusts += 1
 
 		switch record.Error.(type) {
-		case ConnectError:
+		case *ConnectError:
 			stats.errConnect += 1
-		case ExceptionError:
+		case *ExceptionError:
 			stats.errException += 1
-		case LengthError:
+		case *LengthError:
 			stats.errLength += 1
-		case ReceiveError:
+		case *ReceiveError:
 			stats.errReceive += 1
-		case ResponseError:
+		case *ResponseError:
 			stats.errResponse += 1
 		default:
 			stats.errException += 1
