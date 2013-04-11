@@ -22,7 +22,6 @@ var (
 )
 
 func main() {
-	StartBlockProfile(1)
 	if config, err := loadConfig(); err != nil {
 		fmt.Println(err)
 		flag.Usage()
