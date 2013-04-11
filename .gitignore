@@ -4,5 +4,4 @@ raw/
 *.csv
 *.pprof
 profilingtool.go
-postfile.txt
 gb

@@ -30,7 +30,15 @@ type HttpWorker struct {
 }
 
 func NewHttpWorker(config *Config, start *sync.WaitGroup, stop chan bool, jobs chan *http.Request, collector chan *Record) *HttpWorker {
-	return &HttpWorker{config, start, stop, NewClient(config), jobs, collector, bytes.NewBuffer(make([]byte, 0, config.contentSize+bytes.MinRead))}
+	return &HttpWorker{
+		config,
+		start,
+		stop,
+		NewClient(config),
+		jobs,
+		collector,
+		bytes.NewBuffer(make([]byte, 0, config.contentSize+bytes.MinRead)),
+	}
 }
 
 func (h *HttpWorker) Run() {
