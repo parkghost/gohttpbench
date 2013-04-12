@@ -21,7 +21,7 @@ Usage: gb [options] http[s]://hostname[:port]/path
 Options are:
   -A="": Add Basic WWW Authentication, the attributes are a colon separated username and password.
   -C=[]: Add cookie, eg. 'Apache=1234. (repeatable)
-  -G=2: Number of Goroutine procs
+  -G=2: Number of CPU
   -H=[]: Add Arbitrary header line, eg. 'Accept-Encoding: gzip' Inserted after all normal header lines. (repeatable)
   -T="text/plain": Content-type header for POSTing, eg. 'application/x-www-form-urlencoded' Default is 'text/plain'
   -c=1: Number of multiple requests to make
@@ -30,7 +30,7 @@ Options are:
   -k=false: Use HTTP KeepAlive feature
   -n=1: Number of requests to perform
   -p="": File containing data to POST. Remember also to set -T
-  -r=false: Don't exit on socket receive errors
+  -r=false: Don't exit when errors
   -t=0: Seconds to max. wait for responses
   -u="": File containing data to PUT. Remember also to set -T
   -v=0: How much troubleshooting info to print
