@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func printHeader() {
+func PrintHeader() {
 	fmt.Println(`
 This is GoHttpBench, Version ` + GB_VERSION + `, https://github.com/parkghost/gohttpbench
 Author: Brandon Chen, Email: parkghost@gmail.com
@@ -17,7 +17,7 @@ Licensed under the Apache License, Version 2.0
 `)
 }
 
-func printReport(config *Config, stats *Stats) {
+func PrintReport(config *Config, stats *Stats) {
 
 	var buffer bytes.Buffer
 
@@ -52,8 +52,8 @@ func printReport(config *Config, stats *Stats) {
 	fmt.Fprintf(&buffer, "HTML transferred:       %d bytes\n", totalReceived)
 
 	if len(responseTimeData) > 0 && totalExecutionTime > 0 {
-		stdDevOfResponseTime := StdDev(responseTimeData) / 1000000
-		sort.Sort(DurationSlice(responseTimeData))
+		stdDevOfResponseTime := stdDev(responseTimeData) / 1000000
+		sort.Sort(durationSlice(responseTimeData))
 
 		meanOfResponseTime := int64(totalExecutionTime) / int64(totalRequests) / 1000000
 		medianOfResponseTime := responseTimeData[len(responseTimeData)/2] / 1000000
@@ -86,14 +86,14 @@ func printReport(config *Config, stats *Stats) {
 	fmt.Println(buffer.String())
 }
 
-type DurationSlice []time.Duration
+type durationSlice []time.Duration
 
-func (s DurationSlice) Len() int           { return len(s) }
-func (s DurationSlice) Less(i, j int) bool { return s[i] < s[j] }
-func (s DurationSlice) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
+func (s durationSlice) Len() int           { return len(s) }
+func (s durationSlice) Less(i, j int) bool { return s[i] < s[j] }
+func (s durationSlice) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 
 // StdDev calculate standard deviation
-func StdDev(data []time.Duration) float64 {
+func stdDev(data []time.Duration) float64 {
 	var sum int64 = 0
 	for _, d := range data {
 		sum += int64(d)

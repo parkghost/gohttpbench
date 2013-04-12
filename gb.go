@@ -22,12 +22,12 @@ var (
 )
 
 func main() {
-	if config, err := loadConfig(); err != nil {
+	if config, err := LoadConfig(); err != nil {
 		fmt.Println(err)
 		flag.Usage()
 		os.Exit(-1)
 	} else {
-		if err := detectHost(config); err != nil {
+		if err := DetectHost(config); err != nil {
 			log.Fatal(err)
 		} else {
 			runtime.GOMAXPROCS(GoMaxProcs)
@@ -37,7 +37,7 @@ func main() {
 }
 
 func startBenchmark(config *Config) {
-	printHeader()
+	PrintHeader()
 
 	start := &sync.WaitGroup{}
 	start.Add(config.concurrency)
@@ -48,5 +48,5 @@ func startBenchmark(config *Config) {
 	go monitor.Run()
 	go benchmark.Run()
 
-	printReport(config, <-monitor.output)
+	PrintReport(config, <-monitor.output)
 }

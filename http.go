@@ -137,7 +137,7 @@ func (h *HttpWorker) send(request *http.Request) (asyncResult chan *Record) {
 	return asyncResult
 }
 
-func detectHost(config *Config) error {
+func DetectHost(config *Config) error {
 	var err error
 	defer func() {
 		if r := recover(); r != nil {

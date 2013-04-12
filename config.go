@@ -36,11 +36,11 @@ type Config struct {
 	contentSize int
 }
 
-func loadConfig() (config *Config, err error) {
+func LoadConfig() (config *Config, err error) {
 	// setup command-line flags
 	flag.IntVar(&Verbosity, "v", 0, "How much troubleshooting info to print")
-	flag.IntVar(&GoMaxProcs, "G", runtime.NumCPU(), "Number of Goroutine procs")
-	flag.BoolVar(&ContinueOnError, "r", false, "Don't exit on socket receive errors")
+	flag.IntVar(&GoMaxProcs, "G", runtime.NumCPU(), "Number of CPU")
+	flag.BoolVar(&ContinueOnError, "r", false, "Don't exit when errors")
 
 	request := flag.Int("n", 1, "Number of requests to perform")
 	concurrency := flag.Int("c", 1, "Number of multiple requests to make")
