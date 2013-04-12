@@ -18,20 +18,19 @@ type Monitor struct {
 }
 
 type Stats struct {
-	responseTimeData    []int64
-	responseTimeDataIdx int
+	responseTimeData []time.Duration
 
-	totalRequests      int
-	totalExecutionTime time.Duration
-	totalResponseTime  time.Duration
-	totalReceived      int64
-
+	totalRequests       int
+	totalExecutionTime  time.Duration
+	totalResponseTime   time.Duration
+	totalReceived       int64
 	totalFailedReqeusts int
-	errLength           int
-	errConnect          int
-	errReceive          int
-	errException        int
-	errResponse         int
+
+	errLength    int
+	errConnect   int
+	errReceive   int
+	errException int
+	errResponse  int
 }
 
 func NewMonitor(config *Config, start *sync.WaitGroup, stop chan bool, benchmark *Benchmark) *Monitor {
@@ -40,16 +39,12 @@ func NewMonitor(config *Config, start *sync.WaitGroup, stop chan bool, benchmark
 
 func (m *Monitor) Run() {
 
+	// catch interrupt signal 
 	userInterrupt := make(chan os.Signal, 1)
 	signal.Notify(userInterrupt, os.Interrupt)
 
 	stats := &Stats{}
-	stats.responseTimeData = make([]int64, m.config.requests)
-	stats.responseTimeDataIdx = 0
-
-	m.start.Wait()
-	sw := &StopWatch{}
-	sw.Start()
+	stats.responseTimeData = make([]time.Duration, 0, m.config.requests)
 
 	var timelimit time.Timer
 	if m.config.timelimit > 0 {
@@ -57,7 +52,12 @@ func (m *Monitor) Run() {
 	}
 	defer timelimit.Stop()
 
+	// waiting for all of http workers to start
+	m.start.Wait()
+
 	fmt.Printf("Benchmarking %s (be patient)\n", m.config.host)
+	sw := &StopWatch{}
+	sw.Start()
 
 loop:
 	for {
@@ -89,7 +89,7 @@ loop:
 	sw.Stop()
 	stats.totalExecutionTime = sw.Elapsed
 
-	// to notify benchmark and all of httpworkers stop running
+	// shutdown benchmark and all of httpworkers to stop
 	close(m.stop)
 	m.output <- stats
 }
@@ -116,12 +116,9 @@ func updateStats(stats *Stats, record *Record) {
 		}
 
 	} else {
-
 		stats.totalResponseTime += record.responseTime
 		stats.totalReceived += record.contentSize
-
-		stats.responseTimeData[stats.responseTimeDataIdx] = record.responseTime.Nanoseconds()
-		stats.responseTimeDataIdx += 1
+		stats.responseTimeData = append(stats.responseTimeData, record.responseTime)
 	}
 
 }

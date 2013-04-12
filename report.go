@@ -6,6 +6,7 @@ import (
 	"math"
 	"net/url"
 	"sort"
+	"time"
 )
 
 func printHeader() {
@@ -21,7 +22,6 @@ func printReport(config *Config, stats *Stats) {
 	var buffer bytes.Buffer
 
 	responseTimeData := stats.responseTimeData
-	responseTimeDataIdx := stats.responseTimeDataIdx
 	totalFailedReqeusts := stats.totalFailedReqeusts
 	totalRequests := stats.totalRequests
 	totalExecutionTime := stats.totalExecutionTime
@@ -51,9 +51,9 @@ func printReport(config *Config, stats *Stats) {
 	}
 	fmt.Fprintf(&buffer, "HTML transferred:       %d bytes\n", totalReceived)
 
-	if responseTimeDataIdx > 0 && totalExecutionTime > 0 {
-		stdDevOfResponseTime := StdDev(responseTimeData[:responseTimeDataIdx]) / 1000000
-		sort.Sort(Int64Slice(responseTimeData))
+	if len(responseTimeData) > 0 && totalExecutionTime > 0 {
+		stdDevOfResponseTime := StdDev(responseTimeData) / 1000000
+		sort.Sort(DurationSlice(responseTimeData))
 
 		meanOfResponseTime := int64(totalExecutionTime) / int64(totalRequests) / 1000000
 		medianOfResponseTime := responseTimeData[len(responseTimeData)/2] / 1000000
@@ -86,25 +86,24 @@ func printReport(config *Config, stats *Stats) {
 	fmt.Println(buffer.String())
 }
 
-// custom sortable []int64 data type
-type Int64Slice []int64
+type DurationSlice []time.Duration
 
-func (s Int64Slice) Len() int           { return len(s) }
-func (s Int64Slice) Less(i, j int) bool { return s[i] < s[j] }
-func (s Int64Slice) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
+func (s DurationSlice) Len() int           { return len(s) }
+func (s DurationSlice) Less(i, j int) bool { return s[i] < s[j] }
+func (s DurationSlice) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 
-// calculate standard deviation
-func StdDev(data []int64) float64 {
+// StdDev calculate standard deviation
+func StdDev(data []time.Duration) float64 {
 	var sum int64 = 0
-	for _, i := range data {
-		sum += i
+	for _, d := range data {
+		sum += int64(d)
 	}
 	avg := float64(sum / int64(len(data)))
 
 	sumOfSquares := 0.0
-	for _, i := range data {
+	for _, d := range data {
 
-		sumOfSquares += math.Pow(float64(i)-avg, 2)
+		sumOfSquares += math.Pow(float64(d)-avg, 2)
 	}
 	return math.Sqrt(sumOfSquares / float64(len(data)))
 

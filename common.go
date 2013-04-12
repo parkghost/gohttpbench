@@ -10,7 +10,6 @@ import (
 
 type StopWatch struct {
 	start   time.Time
-	end     time.Time
 	Elapsed time.Duration
 }
 
@@ -19,8 +18,7 @@ func (s *StopWatch) Start() {
 }
 
 func (s *StopWatch) Stop() {
-	s.end = time.Now()
-	s.Elapsed = s.end.Sub(s.start)
+	s.Elapsed = time.Now().Sub(s.start)
 }
 
 func TraceException(msg interface{}) {
