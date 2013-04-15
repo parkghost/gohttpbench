@@ -29,8 +29,8 @@ type Stats struct {
 	errResponse  int
 }
 
-func NewMonitor(context *Context, benchmark *Benchmark) *Monitor {
-	return &Monitor{context, benchmark.collector, make(chan *Stats)}
+func NewMonitor(context *Context, collector chan *Record) *Monitor {
+	return &Monitor{context, collector, make(chan *Stats)}
 }
 
 func (m *Monitor) Run() {

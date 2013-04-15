@@ -34,14 +34,13 @@ func main() {
 			startBenchmark(context)
 		}
 	}
-	PrintGCSummary()
 }
 
 func startBenchmark(context *Context) {
 	PrintHeader()
 
 	benchmark := NewBenchmark(context)
-	monitor := NewMonitor(context, benchmark)
+	monitor := NewMonitor(context, benchmark.collector)
 	go monitor.Run()
 	go benchmark.Run()
 
