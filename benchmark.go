@@ -2,15 +2,11 @@ package main
 
 import (
 	"net/http"
-	"sync"
 	"time"
 )
 
 type Benchmark struct {
-	config *Config
-	start  *sync.WaitGroup
-	stop   chan bool
-
+	c         *Context
 	collector chan *Record
 }
 
@@ -20,23 +16,23 @@ type Record struct {
 	Error        error
 }
 
-func NewBenchmark(config *Config, start *sync.WaitGroup, stop chan bool) *Benchmark {
-	collector := make(chan *Record, config.requests)
-	return &Benchmark{config, start, stop, collector}
+func NewBenchmark(context *Context) *Benchmark {
+	collector := make(chan *Record, context.config.requests)
+	return &Benchmark{context, collector}
 }
 
 func (b *Benchmark) Run() {
 
-	jobs := make(chan *http.Request, b.config.concurrency*GoMaxProcs)
+	jobs := make(chan *http.Request, b.c.config.concurrency*GoMaxProcs)
 
-	for i := 0; i < b.config.concurrency; i++ {
-		go NewHttpWorker(b.config, b.start, b.stop, jobs, b.collector).Run()
+	for i := 0; i < b.c.config.concurrency; i++ {
+		go NewHttpWorker(b.c, jobs, b.collector).Run()
 	}
 
-	base, _ := NewHttpRequest(b.config)
-	for i := 0; i < b.config.requests; i++ {
-		jobs <- CopyHttpRequest(b.config, base)
+	base, _ := NewHttpRequest(b.c.config)
+	for i := 0; i < b.c.config.requests; i++ {
+		jobs <- CopyHttpRequest(b.c.config, base)
 	}
 
-	<-b.stop
+	<-b.c.stop
 }

@@ -31,9 +31,6 @@ type Config struct {
 	url  string
 	host string
 	port int
-
-	serverName  string
-	contentSize int
 }
 
 func LoadConfig() (config *Config, err error) {

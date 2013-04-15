@@ -17,10 +17,11 @@ Licensed under the Apache License, Version 2.0
 `)
 }
 
-func PrintReport(config *Config, stats *Stats) {
+func PrintReport(context *Context, stats *Stats) {
 
 	var buffer bytes.Buffer
 
+	config := context.config
 	responseTimeData := stats.responseTimeData
 	totalFailedReqeusts := stats.totalFailedReqeusts
 	totalRequests := stats.totalRequests
@@ -30,12 +31,12 @@ func PrintReport(config *Config, stats *Stats) {
 	URL, _ := url.Parse(config.url)
 
 	fmt.Fprint(&buffer, "\n\n")
-	fmt.Fprintf(&buffer, "Server Software:        %s\n", config.serverName)
+	fmt.Fprintf(&buffer, "Server Software:        %s\n", context.GetString(SERVER_NAME))
 	fmt.Fprintf(&buffer, "Server Hostname:        %s\n", config.host)
 	fmt.Fprintf(&buffer, "Server Port:            %d\n\n", config.port)
 
 	fmt.Fprintf(&buffer, "Document Path:          %s\n", URL.RequestURI())
-	fmt.Fprintf(&buffer, "Document Length:        %d bytes\n\n", config.contentSize)
+	fmt.Fprintf(&buffer, "Document Length:        %d bytes\n\n", context.GetInt(CONTENT_SIZE))
 
 	fmt.Fprintf(&buffer, "Concurrency Level:      %d\n", config.concurrency)
 	fmt.Fprintf(&buffer, "Time taken for tests:   %.2f seconds\n", totalExecutionTime.Seconds())

@@ -10,8 +10,12 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
+)
+
+const (
+	SERVER_NAME  = "ServerName"
+	CONTENT_SIZE = "ContentSize"
 )
 
 var (
@@ -19,36 +23,31 @@ var (
 )
 
 type HttpWorker struct {
-	config *Config
-	start  *sync.WaitGroup
-	stop   chan bool
-
+	c         *Context
 	client    *http.Client
 	jobs      chan *http.Request
 	collector chan *Record
 	readBuf   *bytes.Buffer
 }
 
-func NewHttpWorker(config *Config, start *sync.WaitGroup, stop chan bool, jobs chan *http.Request, collector chan *Record) *HttpWorker {
+func NewHttpWorker(context *Context, jobs chan *http.Request, collector chan *Record) *HttpWorker {
 	return &HttpWorker{
-		config,
-		start,
-		stop,
-		NewClient(config),
+		context,
+		NewClient(context.config),
 		jobs,
 		collector,
-		bytes.NewBuffer(make([]byte, 0, config.contentSize+bytes.MinRead)),
+		bytes.NewBuffer(make([]byte, 0, context.GetInt(CONTENT_SIZE)+bytes.MinRead)),
 	}
 }
 
 func (h *HttpWorker) Run() {
-	h.start.Done()
-	h.start.Wait()
+	h.c.start.Done()
+	h.c.start.Wait()
 
 	for job := range h.jobs {
 
 		asyncResult := h.send(job)
-		// TODO: use timer.Reset(d) instead of create new timer (Go 1.1)
+		// TODO:(Go 1.1) use timer.Reset(d) instead of create new timer
 		timeout := time.NewTimer(time.Duration(MAX_RESPONSE_TIMEOUT) * time.Second)
 
 		select {
@@ -56,10 +55,13 @@ func (h *HttpWorker) Run() {
 			h.collector <- record
 
 		case <-timeout.C:
-			h.collector <- &Record{Error: errors.New("execution timeout")}
+			h.collector <- &Record{Error: &ResponseTimeoutError{errors.New("execution timeout")}}
 
-		case <-h.stop:
+			// TODO:(Go 1.1) timeout control https://code.google.com/p/go/issues/detail?id=3362
+			// h.client.Transport.(*http.Transport).CancelRequest(job)
+		case <-h.c.stop:
 			timeout.Stop()
+			// h.client.Transport.(*http.Transport).CancelRequest(job)
 			return
 		}
 		timeout.Stop()
@@ -122,10 +124,10 @@ func (h *HttpWorker) send(request *http.Request) (asyncResult chan *Record) {
 			if headerContentSize != "" {
 				expectedContentSize, _ = strconv.Atoi(headerContentSize)
 			} else {
-				expectedContentSize = h.config.contentSize
+				expectedContentSize = h.c.GetInt(CONTENT_SIZE)
 			}
 
-			if h.config.method != "HEAD" && int64(expectedContentSize) != contentSize {
+			if h.c.config.method != "HEAD" && int64(expectedContentSize) != contentSize {
 				record.Error = &LengthError{invalidContnetSize}
 				return
 			}
@@ -137,7 +139,7 @@ func (h *HttpWorker) send(request *http.Request) (asyncResult chan *Record) {
 	return asyncResult
 }
 
-func DetectHost(config *Config) error {
+func DetectHost(context *Context) error {
 	var err error
 	defer func() {
 		if r := recover(); r != nil {
@@ -145,8 +147,8 @@ func DetectHost(config *Config) error {
 		}
 	}()
 
-	client := NewClient(config)
-	reqeust, err := NewHttpRequest(config)
+	client := NewClient(context.config)
+	reqeust, err := NewHttpRequest(context.config)
 	if err != nil {
 		return err
 	}
@@ -160,14 +162,14 @@ func DetectHost(config *Config) error {
 		defer resp.Body.Close()
 		body, _ := ioutil.ReadAll(resp.Body)
 
-		// TODO: place on another context
-		config.serverName = resp.Header.Get("Server")
+		context.SetString(SERVER_NAME, resp.Header.Get("Server"))
 		headerContentSize := resp.Header.Get("Content-Length")
 
 		if headerContentSize != "" {
-			config.contentSize, _ = strconv.Atoi(headerContentSize)
+			contentSize, _ := strconv.Atoi(headerContentSize)
+			context.SetInt(CONTENT_SIZE, contentSize)
 		} else {
-			config.contentSize = len(body)
+			context.SetInt(CONTENT_SIZE, len(body))
 		}
 	}
 
@@ -291,5 +293,13 @@ type ResponseError struct {
 }
 
 func (e *ResponseError) Error() string {
+	return e.err.Error()
+}
+
+type ResponseTimeoutError struct {
+	err error
+}
+
+func (e *ResponseTimeoutError) Error() string {
 	return e.err.Error()
 }

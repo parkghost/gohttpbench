@@ -4,15 +4,11 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"sync"
 	"time"
 )
 
 type Monitor struct {
-	config *Config
-	start  *sync.WaitGroup
-	stop   chan bool
-
+	c         *Context
 	collector chan *Record
 	output    chan *Stats
 }
@@ -33,29 +29,29 @@ type Stats struct {
 	errResponse  int
 }
 
-func NewMonitor(config *Config, start *sync.WaitGroup, stop chan bool, benchmark *Benchmark) *Monitor {
-	return &Monitor{config, start, stop, benchmark.collector, make(chan *Stats)}
+func NewMonitor(context *Context, benchmark *Benchmark) *Monitor {
+	return &Monitor{context, benchmark.collector, make(chan *Stats)}
 }
 
 func (m *Monitor) Run() {
 
-	// catch interrupt signal 
+	// catch interrupt signal
 	userInterrupt := make(chan os.Signal, 1)
 	signal.Notify(userInterrupt, os.Interrupt)
 
 	stats := &Stats{}
-	stats.responseTimeData = make([]time.Duration, 0, m.config.requests)
+	stats.responseTimeData = make([]time.Duration, 0, m.c.config.requests)
 
 	var timelimit time.Timer
-	if m.config.timelimit > 0 {
-		timelimit = *time.NewTimer(time.Duration(m.config.timelimit) * time.Second)
+	if m.c.config.timelimit > 0 {
+		timelimit = *time.NewTimer(time.Duration(m.c.config.timelimit) * time.Second)
 	}
 	defer timelimit.Stop()
 
 	// waiting for all of http workers to start
-	m.start.Wait()
+	m.c.start.Wait()
 
-	fmt.Printf("Benchmarking %s (be patient)\n", m.config.host)
+	fmt.Printf("Benchmarking %s (be patient)\n", m.c.config.host)
 	sw := &StopWatch{}
 	sw.Start()
 
@@ -70,11 +66,11 @@ loop:
 				break loop
 			}
 
-			if stats.totalRequests >= 10 && stats.totalRequests%(m.config.requests/10) == 0 {
+			if stats.totalRequests >= 10 && stats.totalRequests%(m.c.config.requests/10) == 0 {
 				fmt.Printf("Completed %d requests\n", stats.totalRequests)
 			}
 
-			if stats.totalRequests == m.config.requests {
+			if stats.totalRequests == m.c.config.requests {
 				fmt.Printf("Finished %d requests\n", stats.totalRequests)
 				break loop
 			}
@@ -90,7 +86,7 @@ loop:
 	stats.totalExecutionTime = sw.Elapsed
 
 	// shutdown benchmark and all of httpworkers to stop
-	close(m.stop)
+	close(m.c.stop)
 	m.output <- stats
 }
 
