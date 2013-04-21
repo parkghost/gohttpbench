@@ -244,16 +244,15 @@ func NewHttpRequest(config *Config) (*http.Request, error) {
 }
 
 func CopyHttpRequest(config *Config, request *http.Request) *http.Request {
-
-	if config.method != "POST" || config.method != "PUT" {
+	if config.method == "POST" || config.method == "PUT" {
+		newRequest := *request
+		if newRequest.Body != nil {
+			newRequest.Body = ioutil.NopCloser(bytes.NewReader(config.bodyContent))
+		}
+		return &newRequest
+	} else {
 		return request
 	}
-
-	newRequest := *request
-	if newRequest.Body != nil {
-		newRequest.Body = ioutil.NopCloser(bytes.NewReader(config.bodyContent))
-	}
-	return &newRequest
 }
 
 type LengthError struct {
