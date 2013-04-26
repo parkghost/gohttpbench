@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"os"
 	"testing"
 	"time"
 )
@@ -23,9 +24,16 @@ func TestMonitorWithSuccessedResponse(t *testing.T) {
 	collector <- request1
 	collector <- request2
 
+	devnull, _ := os.Open(os.DevNull)
+	defer devnull.Close()
+
+	stdout := os.Stdout
+	os.Stdout = devnull
+
 	go monitor.Run()
 	stats := <-monitor.output
 
+	os.Stdout = stdout
 	if stats.totalRequests != config.requests {
 		t.Fatalf("expected %d requests, actual %d requests", config.requests, stats.totalRequests)
 	}
@@ -77,8 +85,15 @@ func TestMonitorWithFailedResponse(t *testing.T) {
 		collector <- record
 	}
 
+	devnull, _ := os.Open(os.DevNull)
+	defer devnull.Close()
+
+	stdout := os.Stdout
+	os.Stdout = devnull
+
 	go monitor.Run()
 	actualStats := <-monitor.output
+	os.Stdout = stdout
 
 	if actualStats.totalRequests != expectedStat.totalRequests ||
 		actualStats.totalFailedReqeusts != expectedStat.totalFailedReqeusts ||
