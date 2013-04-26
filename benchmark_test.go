@@ -46,6 +46,6 @@ func TestBenchmark(t *testing.T) {
 	<-context.stop
 
 	if actualReceived := atomic.LoadInt64(&received); int64(requests) != actualReceived {
-		t.Fatalf("expected to send %d requests and receive %d responses, but get %d responses", requests, requests, actualReceived)
+		t.Fatalf("expected to send %d requests and receive %d responses, but got %d responses", requests, requests, actualReceived)
 	}
 }

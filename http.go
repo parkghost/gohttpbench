@@ -139,8 +139,7 @@ func (h *HttpWorker) send(request *http.Request) (asyncResult chan *Record) {
 	return asyncResult
 }
 
-func DetectHost(context *Context) error {
-	var err error
+func DetectHost(context *Context) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			TraceException(r)
@@ -150,13 +149,13 @@ func DetectHost(context *Context) error {
 	client := NewClient(context.config)
 	reqeust, err := NewHttpRequest(context.config)
 	if err != nil {
-		return err
+		return
 	}
 
 	resp, err := client.Do(reqeust)
 
 	if err != nil {
-		return err
+		return
 	} else {
 
 		defer resp.Body.Close()
@@ -173,7 +172,7 @@ func DetectHost(context *Context) error {
 		}
 	}
 
-	return nil
+	return
 }
 
 func NewClient(config *Config) *http.Client {
@@ -192,24 +191,21 @@ func NewClient(config *Config) *http.Client {
 		TLSClientConfig:    tlsconfig,
 	}
 
-	client := &http.Client{Transport: transport}
-	return client
+	return &http.Client{Transport: transport}
 }
 
-func NewHttpRequest(config *Config) (*http.Request, error) {
+func NewHttpRequest(config *Config) (request *http.Request, err error) {
 
 	var body io.Reader
-	var err error
 
 	if (config.method == "POST" || config.method == "PUT") && config.bodyContent != nil {
-
 		body = bytes.NewReader(config.bodyContent)
 	}
 
-	request, err := http.NewRequest(config.method, config.url, body)
+	request, err = http.NewRequest(config.method, config.url, body)
 
 	if err != nil {
-		return nil, err
+		return
 	}
 
 	if body != nil && config.contentType == "text/plain" {
@@ -240,7 +236,7 @@ func NewHttpRequest(config *Config) (*http.Request, error) {
 		request.SetBasicAuth(pair[0], pair[1])
 	}
 
-	return request, err
+	return
 }
 
 func CopyHttpRequest(config *Config, request *http.Request) *http.Request {

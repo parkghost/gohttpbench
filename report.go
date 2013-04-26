@@ -13,7 +13,7 @@ func PrintHeader() {
 	fmt.Println(`
 This is GoHttpBench, Version ` + GB_VERSION + `, https://github.com/parkghost/gohttpbench
 Author: Brandon Chen, Email: parkghost@gmail.com
-Licensed under the Apache License, Version 2.0
+Licensed under the MIT license
 `)
 }
 

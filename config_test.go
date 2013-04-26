@@ -23,7 +23,7 @@ func TestExtractHostAndPort(t *testing.T) {
 		host, port := extractHostAndPort(URL)
 
 		if host != expectedData.host && port != expectedData.port {
-			t.Errorf("expected host:%s and port:%d, get", host, port)
+			t.Errorf("expected host:%s and port:%d, got", host, port)
 		}
 	}
 }
