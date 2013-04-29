@@ -63,10 +63,10 @@ func LoadConfig() (config *Config, err error) {
 		flag.PrintDefaults()
 	}
 
-	urlStr := os.Args[len(os.Args)-1]
-	isUrl, _ := regexp.MatchString(`http.*?://.*`, urlStr)
-
 	flag.Parse()
+
+	urlStr := strings.Trim(strings.Join(flag.Args(), " "), " ")
+	isUrl, _ := regexp.MatchString(`http.*?://.*`, urlStr)
 
 	if *help || len(os.Args) == 1 || !isUrl {
 		flag.Usage()
