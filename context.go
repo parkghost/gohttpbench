@@ -7,7 +7,7 @@ import (
 type Context struct {
 	config *Config
 	start  *sync.WaitGroup
-	stop   chan bool
+	stop   chan struct{}
 	rwm    *sync.RWMutex
 	store  map[string]interface{}
 }
@@ -15,7 +15,7 @@ type Context struct {
 func NewContext(config *Config) *Context {
 	start := &sync.WaitGroup{}
 	start.Add(config.concurrency)
-	return &Context{config, start, make(chan bool), &sync.RWMutex{}, make(map[string]interface{})}
+	return &Context{config, start, make(chan struct{}), &sync.RWMutex{}, make(map[string]interface{})}
 }
 
 func (c *Context) SetString(key string, value string) {
