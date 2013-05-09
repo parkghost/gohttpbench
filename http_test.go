@@ -75,14 +75,14 @@ func BenchmarkNewHttpRequest_Get(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		NewHttpRequest(getRequestConfig)
 	}
-	b.ReportAllocs()
+	//b.ReportAllocs()
 }
 
 func BenchmarkNewHttpRequest_Post(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		NewHttpRequest(postRequestConfig)
 	}
-	b.ReportAllocs()
+	//b.ReportAllocs()
 }
 
 func BenchmarkCopyHttpRequest_Get(b *testing.B) {
@@ -90,7 +90,7 @@ func BenchmarkCopyHttpRequest_Get(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		CopyHttpRequest(getRequestConfig, base)
 	}
-	b.ReportAllocs()
+	//b.ReportAllocs()
 }
 
 func BenchmarkCopyHttpRequest_Post(b *testing.B) {
@@ -98,5 +98,5 @@ func BenchmarkCopyHttpRequest_Post(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		CopyHttpRequest(postRequestConfig, base)
 	}
-	b.ReportAllocs()
+	//b.ReportAllocs()
 }
