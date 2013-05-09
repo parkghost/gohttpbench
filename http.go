@@ -246,9 +246,8 @@ func CopyHttpRequest(config *Config, request *http.Request) *http.Request {
 			newRequest.Body = ioutil.NopCloser(bytes.NewReader(config.bodyContent))
 		}
 		return &newRequest
-	} else {
-		return request
 	}
+	return request
 }
 
 type LengthError struct {
