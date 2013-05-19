@@ -79,12 +79,12 @@ func LoadConfig() (config *Config, err error) {
 	config.concurrency = *concurrency
 
 	switch {
-	case *postFile == "POST":
+	case *postFile != "":
 		config.method = "POST"
 		if err = loadFile(config, *postFile); err != nil {
 			return
 		}
-	case *putFile == "PUT":
+	case *putFile != "":
 		config.method = "PUT"
 		if err = loadFile(config, *putFile); err != nil {
 			return
