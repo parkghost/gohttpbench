@@ -9,12 +9,15 @@ import (
 )
 
 var getRequestConfig = &Config{
-	method: "GET",
-	url:    "http://localhost/",
+	url:              "http://localhost/",
+	method:           "GET",
+	executionTimeout: time.Duration(100) * time.Millisecond,
 }
 var postRequestConfig = &Config{
-	method: "POST",
-	url:    "http://localhost/",
+	url:              "http://localhost/",
+	method:           "POST",
+	contentType:      "application/x-www-form-urlencoded",
+	executionTimeout: time.Duration(100) * time.Millisecond,
 }
 
 func init() {
