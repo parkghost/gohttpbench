@@ -44,28 +44,28 @@ func (h *HttpWorker) Run() {
 	h.c.start.Done()
 	h.c.start.Wait()
 
+	timer := time.NewTimer(h.c.config.executionTimeout)
+
 	for job := range h.jobs {
 
+		timer.Reset(h.c.config.executionTimeout)
 		asyncResult := h.send(job)
-		// TODO:(Go 1.1) use timer.Reset(d) instead of create new timer
-		timeout := time.NewTimer(time.Duration(MAX_RESPONSE_TIMEOUT) * time.Second)
 
 		select {
 		case record := <-asyncResult:
 			h.collector <- record
 
-		case <-timeout.C:
+		case <-timer.C:
 			h.collector <- &Record{Error: &ResponseTimeoutError{errors.New("execution timeout")}}
+			h.client.Transport.(*http.Transport).CancelRequest(job)
 
-			// TODO:(Go 1.1) timeout control https://code.google.com/p/go/issues/detail?id=3362
-			// h.client.Transport.(*http.Transport).CancelRequest(job)
 		case <-h.c.stop:
-			timeout.Stop()
-			// h.client.Transport.(*http.Transport).CancelRequest(job)
+			h.client.Transport.(*http.Transport).CancelRequest(job)
+			timer.Stop()
 			return
 		}
-		timeout.Stop()
 	}
+	timer.Stop()
 }
 
 func (h *HttpWorker) send(request *http.Request) (asyncResult chan *Record) {
@@ -95,7 +95,11 @@ func (h *HttpWorker) send(request *http.Request) (asyncResult chan *Record) {
 				TraceException(record.Error)
 			}
 
-			asyncResult <- record
+			select {
+			case asyncResult <- record:
+			default:
+				// exeuction timeout
+			}
 		}()
 
 		resp, err := h.client.Do(request)
@@ -182,7 +186,6 @@ func NewClient(config *Config) *http.Client {
 		InsecureSkipVerify: true,
 	}
 
-	// TODO: timeout control
 	// TODO: tcp options
 	// TODO: monitor tcp metrics
 	transport := &http.Transport{
@@ -208,12 +211,7 @@ func NewHttpRequest(config *Config) (request *http.Request, err error) {
 		return
 	}
 
-	if body != nil && config.contentType == "text/plain" {
-		request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	} else {
-		request.Header.Set("Content-Type", config.contentType)
-	}
-
+	request.Header.Set("Content-Type", config.contentType)
 	request.Header.Set("User-Agent", config.userAgent)
 
 	if config.keepAlive {

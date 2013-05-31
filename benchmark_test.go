@@ -19,10 +19,11 @@ func TestBenchmark(t *testing.T) {
 	defer ts.Close()
 
 	config := &Config{
-		concurrency: 10,
-		requests:    requests,
-		method:      "GET",
-		url:         ts.URL,
+		concurrency:      10,
+		requests:         requests,
+		method:           "GET",
+		executionTimeout: MAX_EXECUTION_TIMEOUT,
+		url:              ts.URL,
 	}
 
 	context := NewContext(config)

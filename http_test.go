@@ -1,10 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"sync/atomic"
 	"testing"
+	"time"
 )
 
 var getRequestConfig = &Config{
@@ -20,43 +21,34 @@ func init() {
 	loadFile(postRequestConfig, "testdata/postfile.txt")
 }
 
-func TestHttpWorker(t *testing.T) {
+func TestHttpGet(t *testing.T) {
 
-	requests := 1
-	var received int64 = 0
+	//fake http server
+	responseStr := "hello"
 
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("hello"))
-		atomic.AddInt64(&received, 1)
+		w.Write([]byte(responseStr))
 	}))
 	defer ts.Close()
 
+	// http worker
+
 	config := &Config{
-		concurrency: 1,
-		requests:    requests,
-		method:      "GET",
-		url:         ts.URL,
+		concurrency:      1,
+		requests:         1,
+		method:           "GET",
+		executionTimeout: MAX_EXECUTION_TIMEOUT,
+		url:              ts.URL,
 	}
 
 	context := NewContext(config)
-	context.SetInt(CONTENT_SIZE, 5)
-
-	jobs := make(chan *http.Request, 1)
-	collector := make(chan *Record, 1)
+	context.SetInt(CONTENT_SIZE, len(responseStr))
+	jobs := make(chan *http.Request)
+	collector := make(chan *Record)
 
 	worker := NewHttpWorker(context, jobs, collector)
 
 	go worker.Run()
-	go func() {
-		counter := 0
-		for record := range collector {
-			counter += 1
-			if counter == requests || record.Error != nil {
-				break
-			}
-		}
-		close(context.stop)
-	}()
 
 	request, err := NewHttpRequest(config)
 	if err != nil {
@@ -64,10 +56,117 @@ func TestHttpWorker(t *testing.T) {
 	}
 
 	jobs <- request
-	<-context.stop
+	record := <-collector
+	close(jobs)
+	close(context.stop)
 
-	if actualReceived := atomic.LoadInt64(&received); int64(requests) != actualReceived {
-		t.Fatalf("expected to send %d requests and receive %d responses, but get %d responses", requests, requests, actualReceived)
+	if record.Error != nil {
+		t.Fatalf("sent a http reqeust but was error: %s", record.Error)
+	}
+
+	if record.contentSize != int64(len(responseStr)) {
+		t.Fatalf("send a http reqeust but content size dismatch")
+	}
+}
+
+func TestHttpPost(t *testing.T) {
+
+	//fake http server
+	responseStr := "hello"
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// from values from testdata/postfile.txt
+		if r.FormValue("email") == "test" && r.FormValue("password") == "testing" {
+			w.Write([]byte(responseStr))
+		}
+	}))
+	defer ts.Close()
+
+	// http worker
+
+	config := &Config{
+		concurrency:      1,
+		requests:         1,
+		method:           "POST",
+		contentType:      "application/x-www-form-urlencoded",
+		executionTimeout: MAX_EXECUTION_TIMEOUT,
+		url:              ts.URL,
+	}
+	loadFile(config, "testdata/postfile.txt")
+
+	context := NewContext(config)
+	context.SetInt(CONTENT_SIZE, len(responseStr))
+	jobs := make(chan *http.Request)
+	collector := make(chan *Record)
+
+	worker := NewHttpWorker(context, jobs, collector)
+
+	go worker.Run()
+
+	request, err := NewHttpRequest(config)
+
+	if err != nil {
+		t.Fatalf("new http request failed: %s", err)
+	}
+
+	jobs <- request
+	record := <-collector
+	close(jobs)
+	close(context.stop)
+
+	if record.Error != nil {
+		t.Fatalf("sent a http reqeust but was error: %s", record.Error)
+	}
+
+	if record.contentSize != int64(len(responseStr)) {
+		t.Fatalf("send a http reqeust but content size dismatch")
+	}
+}
+
+func TestHttpWorkerWithTimeout(t *testing.T) {
+
+	//fake http server
+	responseStr := "hello"
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(time.Duration(200) * time.Millisecond)
+		w.Write([]byte(responseStr))
+	}))
+	defer ts.Close()
+
+	// http worker
+
+	config := &Config{
+		concurrency:      1,
+		requests:         1,
+		method:           "GET",
+		executionTimeout: time.Duration(100) * time.Millisecond,
+		url:              ts.URL,
+	}
+
+	context := NewContext(config)
+	context.SetInt(CONTENT_SIZE, len(responseStr))
+	jobs := make(chan *http.Request)
+	collector := make(chan *Record)
+
+	worker := NewHttpWorker(context, jobs, collector)
+
+	go worker.Run()
+
+	request, err := NewHttpRequest(config)
+	if err != nil {
+		t.Fatalf("new http request failed: %s", err)
+	}
+
+	jobs <- request
+	record := <-collector
+	close(jobs)
+	close(context.stop)
+
+	if record.Error == nil {
+
+		fmt.Println(record)
+		t.Fatal("expected timeout error")
 	}
 }
 
@@ -75,14 +174,14 @@ func BenchmarkNewHttpRequest_Get(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		NewHttpRequest(getRequestConfig)
 	}
-	//b.ReportAllocs()
+	b.ReportAllocs()
 }
 
 func BenchmarkNewHttpRequest_Post(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		NewHttpRequest(postRequestConfig)
 	}
-	//b.ReportAllocs()
+	b.ReportAllocs()
 }
 
 func BenchmarkCopyHttpRequest_Get(b *testing.B) {
@@ -90,7 +189,7 @@ func BenchmarkCopyHttpRequest_Get(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		CopyHttpRequest(getRequestConfig, base)
 	}
-	//b.ReportAllocs()
+	b.ReportAllocs()
 }
 
 func BenchmarkCopyHttpRequest_Post(b *testing.B) {
@@ -98,5 +197,5 @@ func BenchmarkCopyHttpRequest_Post(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		CopyHttpRequest(postRequestConfig, base)
 	}
-	//b.ReportAllocs()
+	b.ReportAllocs()
 }

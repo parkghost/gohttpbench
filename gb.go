@@ -6,12 +6,13 @@ import (
 	"log"
 	"os"
 	"runtime"
+	"time"
 )
 
 const (
-	GB_VERSION           = "0.1.7"
-	MAX_RESPONSE_TIMEOUT = 30
-	MAX_REQUESTS         = 50000 // if enable timelimit and without setting reqeusts
+	GB_VERSION            = "0.1.8"
+	MAX_EXECUTION_TIMEOUT = time.Duration(30) * time.Second
+	MAX_REQUESTS          = 50000 // if enable timelimit and without setting reqeusts
 )
 
 var (

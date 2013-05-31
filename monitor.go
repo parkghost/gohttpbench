@@ -87,6 +87,7 @@ loop:
 
 	// shutdown benchmark and all of httpworkers to stop
 	close(m.c.stop)
+	signal.Stop(userInterrupt)
 	m.output <- stats
 }
 

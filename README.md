@@ -1,6 +1,6 @@
 Go-HttpBench
 
-[![Build Status](https://travis-ci.org/parkghost/gohttpbench.png)](https://travis-ci.org/parkghost/gohttpbench) 
+[![Build Status](https://drone.io/github.com/parkghost/gohttpbench/status.png)](https://drone.io/github.com/parkghost/gohttpbench/latest)
 
 ====
 

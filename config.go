@@ -11,12 +11,14 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type Config struct {
-	requests    int
-	concurrency int
-	timelimit   int
+	requests         int
+	concurrency      int
+	timelimit        int
+	executionTimeout time.Duration
 
 	method              string
 	bodyContent         []byte
@@ -101,6 +103,7 @@ func LoadConfig() (config *Config, err error) {
 			config.requests = MAX_REQUESTS
 		}
 	}
+	config.executionTimeout = MAX_EXECUTION_TIMEOUT
 
 	config.contentType = *contentType
 	config.keepAlive = *keepAlive
