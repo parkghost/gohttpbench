@@ -109,6 +109,9 @@ func LoadConfig() (config *Config, err error) {
 	config.keepAlive = *keepAlive
 	config.gzip = *gzip
 	config.basicAuthentication = *basicAuthentication
+	config.headers = []string(headers)
+	config.cookies = []string(cookies)
+	config.userAgent = "GoHttpBench/" + GB_VERSION
 
 	URL, err := url.Parse(urlStr)
 	if err != nil {
