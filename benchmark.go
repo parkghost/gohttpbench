@@ -26,12 +26,12 @@ func (b *Benchmark) Run() {
 	jobs := make(chan *http.Request, b.c.config.concurrency*GoMaxProcs)
 
 	for i := 0; i < b.c.config.concurrency; i++ {
-		go NewHttpWorker(b.c, jobs, b.collector).Run()
+		go NewHTTPWorker(b.c, jobs, b.collector).Run()
 	}
 
-	base, _ := NewHttpRequest(b.c.config)
+	base, _ := NewHTTPRequest(b.c.config)
 	for i := 0; i < b.c.config.requests; i++ {
-		jobs <- CopyHttpRequest(b.c.config, base)
+		jobs <- CopyHTTPRequest(b.c.config, base)
 	}
 	close(jobs)
 

@@ -68,9 +68,9 @@ func LoadConfig() (config *Config, err error) {
 	flag.Parse()
 
 	urlStr := strings.Trim(strings.Join(flag.Args(), " "), " ")
-	isUrl, _ := regexp.MatchString(`http.*?://.*`, urlStr)
+	isURL, _ := regexp.MatchString(`http.*?://.*`, urlStr)
 
-	if *help || len(os.Args) == 1 || !isUrl {
+	if *help || len(os.Args) == 1 || !isURL {
 		flag.Usage()
 		os.Exit(0)
 	}
@@ -100,10 +100,10 @@ func LoadConfig() (config *Config, err error) {
 	if *timelimit > 0 {
 		config.timelimit = *timelimit
 		if config.requests == 1 {
-			config.requests = MAX_REQUESTS
+			config.requests = MaxRequests
 		}
 	}
-	config.executionTimeout = MAX_EXECUTION_TIMEOUT
+	config.executionTimeout = MaxExecutionTimeout
 
 	config.contentType = *contentType
 	config.keepAlive = *keepAlive
@@ -111,7 +111,7 @@ func LoadConfig() (config *Config, err error) {
 	config.basicAuthentication = *basicAuthentication
 	config.headers = []string(headers)
 	config.cookies = []string(cookies)
-	config.userAgent = "GoHttpBench/" + GB_VERSION
+	config.userAgent = "GoHttpBench/" + GBVersion
 
 	URL, err := url.Parse(urlStr)
 	if err != nil {
@@ -143,9 +143,8 @@ func loadFile(config *Config, filename string) error {
 	bytes, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return err
-	} else {
-		config.bodyContent = bytes
 	}
+	config.bodyContent = bytes
 	return nil
 }
 

@@ -11,7 +11,7 @@ import (
 
 func PrintHeader() {
 	fmt.Println(`
-This is GoHttpBench, Version ` + GB_VERSION + `, https://github.com/parkghost/gohttpbench
+This is GoHttpBench, Version ` + GBVersion + `, https://github.com/parkghost/gohttpbench
 Author: Brandon Chen, Email: parkghost@gmail.com
 Licensed under the MIT license
 `)
@@ -31,12 +31,12 @@ func PrintReport(context *Context, stats *Stats) {
 	URL, _ := url.Parse(config.url)
 
 	fmt.Fprint(&buffer, "\n\n")
-	fmt.Fprintf(&buffer, "Server Software:        %s\n", context.GetString(SERVER_NAME))
+	fmt.Fprintf(&buffer, "Server Software:        %s\n", context.GetString(FieldServerName))
 	fmt.Fprintf(&buffer, "Server Hostname:        %s\n", config.host)
 	fmt.Fprintf(&buffer, "Server Port:            %d\n\n", config.port)
 
 	fmt.Fprintf(&buffer, "Document Path:          %s\n", URL.RequestURI())
-	fmt.Fprintf(&buffer, "Document Length:        %d bytes\n\n", context.GetInt(CONTENT_SIZE))
+	fmt.Fprintf(&buffer, "Document Length:        %d bytes\n\n", context.GetInt(FieldContentSize))
 
 	fmt.Fprintf(&buffer, "Concurrency Level:      %d\n", config.concurrency)
 	fmt.Fprintf(&buffer, "Time taken for tests:   %.2f seconds\n", totalExecutionTime.Seconds())
@@ -95,7 +95,7 @@ func (s durationSlice) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 
 // StdDev calculate standard deviation
 func stdDev(data []time.Duration) float64 {
-	var sum int64 = 0
+	var sum int64
 	for _, d := range data {
 		sum += int64(d)
 	}

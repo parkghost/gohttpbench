@@ -10,7 +10,7 @@ import (
 func TestBenchmark(t *testing.T) {
 
 	requests := 100
-	var received int64 = 0
+	var received int64
 
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("hello"))
@@ -22,12 +22,12 @@ func TestBenchmark(t *testing.T) {
 		concurrency:      10,
 		requests:         requests,
 		method:           "GET",
-		executionTimeout: MAX_EXECUTION_TIMEOUT,
+		executionTimeout: MaxExecutionTimeout,
 		url:              ts.URL,
 	}
 
 	context := NewContext(config)
-	context.SetInt(CONTENT_SIZE, 5)
+	context.SetInt(FieldContentSize, 5)
 	benchmark := NewBenchmark(context)
 
 	go benchmark.Run()

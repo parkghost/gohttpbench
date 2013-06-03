@@ -14,15 +14,15 @@ import (
 )
 
 const (
-	SERVER_NAME  = "ServerName"
-	CONTENT_SIZE = "ContentSize"
+	FieldServerName  = "ServerName"
+	FieldContentSize = "ContentSize"
 )
 
 var (
 	invalidContnetSize = errors.New("invalid content size")
 )
 
-type HttpWorker struct {
+type HTTPWorker struct {
 	c         *Context
 	client    *http.Client
 	jobs      chan *http.Request
@@ -30,17 +30,17 @@ type HttpWorker struct {
 	readBuf   *bytes.Buffer
 }
 
-func NewHttpWorker(context *Context, jobs chan *http.Request, collector chan *Record) *HttpWorker {
-	return &HttpWorker{
+func NewHTTPWorker(context *Context, jobs chan *http.Request, collector chan *Record) *HTTPWorker {
+	return &HTTPWorker{
 		context,
 		NewClient(context.config),
 		jobs,
 		collector,
-		bytes.NewBuffer(make([]byte, 0, context.GetInt(CONTENT_SIZE)+bytes.MinRead)),
+		bytes.NewBuffer(make([]byte, 0, context.GetInt(FieldContentSize)+bytes.MinRead)),
 	}
 }
 
-func (h *HttpWorker) Run() {
+func (h *HTTPWorker) Run() {
 	h.c.start.Done()
 	h.c.start.Wait()
 
@@ -68,7 +68,7 @@ func (h *HttpWorker) Run() {
 	timer.Stop()
 }
 
-func (h *HttpWorker) send(request *http.Request) (asyncResult chan *Record) {
+func (h *HTTPWorker) send(request *http.Request) (asyncResult chan *Record) {
 
 	asyncResult = make(chan *Record)
 	go func() {
@@ -106,36 +106,34 @@ func (h *HttpWorker) send(request *http.Request) (asyncResult chan *Record) {
 		if err != nil {
 			record.Error = &ConnectError{err}
 			return
+		}
+
+		defer resp.Body.Close()
+
+		if resp.StatusCode < 200 || resp.StatusCode > 300 {
+			record.Error = &ResponseError{err}
+			return
+		}
+
+		defer h.readBuf.Reset()
+		contentSize, err = h.readBuf.ReadFrom(resp.Body)
+
+		if err != nil {
+			record.Error = &ReceiveError{err}
+			return
+		}
+
+		expectedContentSize := 0
+		headerContentSize := resp.Header.Get("Content-Length")
+		if headerContentSize != "" {
+			expectedContentSize, _ = strconv.Atoi(headerContentSize)
 		} else {
-			defer resp.Body.Close()
+			expectedContentSize = h.c.GetInt(FieldContentSize)
+		}
 
-			if resp.StatusCode < 200 || resp.StatusCode > 300 {
-				record.Error = &ResponseError{err}
-				return
-			}
-
-			defer h.readBuf.Reset()
-			var err error
-			contentSize, err = h.readBuf.ReadFrom(resp.Body)
-
-			if err != nil {
-				record.Error = &ReceiveError{err}
-				return
-			}
-
-			expectedContentSize := 0
-			headerContentSize := resp.Header.Get("Content-Length")
-			if headerContentSize != "" {
-				expectedContentSize, _ = strconv.Atoi(headerContentSize)
-			} else {
-				expectedContentSize = h.c.GetInt(CONTENT_SIZE)
-			}
-
-			if h.c.config.method != "HEAD" && int64(expectedContentSize) != contentSize {
-				record.Error = &LengthError{invalidContnetSize}
-				return
-			}
-
+		if h.c.config.method != "HEAD" && int64(expectedContentSize) != contentSize {
+			record.Error = &LengthError{invalidContnetSize}
+			return
 		}
 
 		sw.Stop()
@@ -151,7 +149,7 @@ func DetectHost(context *Context) (err error) {
 	}()
 
 	client := NewClient(context.config)
-	reqeust, err := NewHttpRequest(context.config)
+	reqeust, err := NewHTTPRequest(context.config)
 	if err != nil {
 		return
 	}
@@ -160,20 +158,19 @@ func DetectHost(context *Context) (err error) {
 
 	if err != nil {
 		return
+	}
+
+	defer resp.Body.Close()
+	body, _ := ioutil.ReadAll(resp.Body)
+
+	context.SetString(FieldServerName, resp.Header.Get("Server"))
+	headerContentSize := resp.Header.Get("Content-Length")
+
+	if headerContentSize != "" {
+		contentSize, _ := strconv.Atoi(headerContentSize)
+		context.SetInt(FieldContentSize, contentSize)
 	} else {
-
-		defer resp.Body.Close()
-		body, _ := ioutil.ReadAll(resp.Body)
-
-		context.SetString(SERVER_NAME, resp.Header.Get("Server"))
-		headerContentSize := resp.Header.Get("Content-Length")
-
-		if headerContentSize != "" {
-			contentSize, _ := strconv.Atoi(headerContentSize)
-			context.SetInt(CONTENT_SIZE, contentSize)
-		} else {
-			context.SetInt(CONTENT_SIZE, len(body))
-		}
+		context.SetInt(FieldContentSize, len(body))
 	}
 
 	return
@@ -197,7 +194,7 @@ func NewClient(config *Config) *http.Client {
 	return &http.Client{Transport: transport}
 }
 
-func NewHttpRequest(config *Config) (request *http.Request, err error) {
+func NewHTTPRequest(config *Config) (request *http.Request, err error) {
 
 	var body io.Reader
 
@@ -237,7 +234,7 @@ func NewHttpRequest(config *Config) (request *http.Request, err error) {
 	return
 }
 
-func CopyHttpRequest(config *Config, request *http.Request) *http.Request {
+func CopyHTTPRequest(config *Config, request *http.Request) *http.Request {
 	if config.method == "POST" || config.method == "PUT" {
 		newRequest := *request
 		if newRequest.Body != nil {

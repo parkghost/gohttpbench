@@ -10,9 +10,9 @@ import (
 )
 
 const (
-	GB_VERSION            = "0.1.8"
-	MAX_EXECUTION_TIMEOUT = time.Duration(30) * time.Second
-	MAX_REQUESTS          = 50000 // if enable timelimit and without setting reqeusts
+	GBVersion           = "0.1.8"
+	MaxExecutionTimeout = time.Duration(30) * time.Second
+	MaxRequests         = 50000 // if enable timelimit and without setting reqeusts
 )
 
 var (

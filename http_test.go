@@ -24,7 +24,7 @@ func init() {
 	loadFile(postRequestConfig, "testdata/postfile.txt")
 }
 
-func TestHttpGet(t *testing.T) {
+func TestHTTPWithGet(t *testing.T) {
 
 	//fake http server
 	responseStr := "hello"
@@ -40,20 +40,20 @@ func TestHttpGet(t *testing.T) {
 		concurrency:      1,
 		requests:         1,
 		method:           "GET",
-		executionTimeout: MAX_EXECUTION_TIMEOUT,
+		executionTimeout: MaxExecutionTimeout,
 		url:              ts.URL,
 	}
 
 	context := NewContext(config)
-	context.SetInt(CONTENT_SIZE, len(responseStr))
+	context.SetInt(FieldContentSize, len(responseStr))
 	jobs := make(chan *http.Request)
 	collector := make(chan *Record)
 
-	worker := NewHttpWorker(context, jobs, collector)
+	worker := NewHTTPWorker(context, jobs, collector)
 
 	go worker.Run()
 
-	request, err := NewHttpRequest(config)
+	request, err := NewHTTPRequest(config)
 	if err != nil {
 		t.Fatalf("new http request failed: %s", err)
 	}
@@ -72,7 +72,7 @@ func TestHttpGet(t *testing.T) {
 	}
 }
 
-func TestHttpPost(t *testing.T) {
+func TestHTTPWithPost(t *testing.T) {
 
 	//fake http server
 	responseStr := "hello"
@@ -92,21 +92,21 @@ func TestHttpPost(t *testing.T) {
 		requests:         1,
 		method:           "POST",
 		contentType:      "application/x-www-form-urlencoded",
-		executionTimeout: MAX_EXECUTION_TIMEOUT,
+		executionTimeout: MaxExecutionTimeout,
 		url:              ts.URL,
 	}
 	loadFile(config, "testdata/postfile.txt")
 
 	context := NewContext(config)
-	context.SetInt(CONTENT_SIZE, len(responseStr))
+	context.SetInt(FieldContentSize, len(responseStr))
 	jobs := make(chan *http.Request)
 	collector := make(chan *Record)
 
-	worker := NewHttpWorker(context, jobs, collector)
+	worker := NewHTTPWorker(context, jobs, collector)
 
 	go worker.Run()
 
-	request, err := NewHttpRequest(config)
+	request, err := NewHTTPRequest(config)
 
 	if err != nil {
 		t.Fatalf("new http request failed: %s", err)
@@ -126,7 +126,7 @@ func TestHttpPost(t *testing.T) {
 	}
 }
 
-func TestHttpWorkerWithTimeout(t *testing.T) {
+func TestHTTPWorkerWithTimeout(t *testing.T) {
 
 	//fake http server
 	responseStr := "hello"
@@ -148,15 +148,15 @@ func TestHttpWorkerWithTimeout(t *testing.T) {
 	}
 
 	context := NewContext(config)
-	context.SetInt(CONTENT_SIZE, len(responseStr))
+	context.SetInt(FieldContentSize, len(responseStr))
 	jobs := make(chan *http.Request)
 	collector := make(chan *Record)
 
-	worker := NewHttpWorker(context, jobs, collector)
+	worker := NewHTTPWorker(context, jobs, collector)
 
 	go worker.Run()
 
-	request, err := NewHttpRequest(config)
+	request, err := NewHTTPRequest(config)
 	if err != nil {
 		t.Fatalf("new http request failed: %s", err)
 	}
@@ -173,32 +173,32 @@ func TestHttpWorkerWithTimeout(t *testing.T) {
 	}
 }
 
-func BenchmarkNewHttpRequest_Get(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		NewHttpRequest(getRequestConfig)
-	}
+func BenchmarkNewHTTPRequestWithGet(b *testing.B) {
 	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		NewHTTPRequest(getRequestConfig)
+	}
 }
 
-func BenchmarkNewHttpRequest_Post(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		NewHttpRequest(postRequestConfig)
-	}
+func BenchmarkNewHTTPRequestWithPost(b *testing.B) {
 	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		NewHTTPRequest(postRequestConfig)
+	}
 }
 
-func BenchmarkCopyHttpRequest_Get(b *testing.B) {
-	base, _ := NewHttpRequest(getRequestConfig)
-	for i := 0; i < b.N; i++ {
-		CopyHttpRequest(getRequestConfig, base)
-	}
+func BenchmarkCopyHTTPRequestWithGet(b *testing.B) {
 	b.ReportAllocs()
+	base, _ := NewHTTPRequest(getRequestConfig)
+	for i := 0; i < b.N; i++ {
+		CopyHTTPRequest(getRequestConfig, base)
+	}
 }
 
-func BenchmarkCopyHttpRequest_Post(b *testing.B) {
-	base, _ := NewHttpRequest(postRequestConfig)
-	for i := 0; i < b.N; i++ {
-		CopyHttpRequest(postRequestConfig, base)
-	}
+func BenchmarkCopyHTTPRequestWithPost(b *testing.B) {
 	b.ReportAllocs()
+	base, _ := NewHTTPRequest(postRequestConfig)
+	for i := 0; i < b.N; i++ {
+		CopyHTTPRequest(postRequestConfig, base)
+	}
 }
