@@ -70,7 +70,7 @@ func (h *HTTPWorker) Run() {
 
 func (h *HTTPWorker) send(request *http.Request) (asyncResult chan *Record) {
 
-	asyncResult = make(chan *Record)
+	asyncResult = make(chan *Record, 1)
 	go func() {
 		record := &Record{}
 		sw := &StopWatch{}
@@ -95,11 +95,7 @@ func (h *HTTPWorker) send(request *http.Request) (asyncResult chan *Record) {
 				TraceException(record.Error)
 			}
 
-			select {
-			case asyncResult <- record:
-			default:
-				// exeuction timeout
-			}
+			asyncResult <- record
 		}()
 
 		resp, err := h.client.Do(request)
