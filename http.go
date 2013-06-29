@@ -16,6 +16,7 @@ import (
 const (
 	FieldServerName  = "ServerName"
 	FieldContentSize = "ContentSize"
+	MaxBufferSize    = 8192
 )
 
 var (
@@ -27,16 +28,25 @@ type HTTPWorker struct {
 	client    *http.Client
 	jobs      chan *http.Request
 	collector chan *Record
-	readBuf   *bytes.Buffer
+	discard   io.ReaderFrom
 }
 
 func NewHTTPWorker(context *Context, jobs chan *http.Request, collector chan *Record) *HTTPWorker {
+
+	var buf []byte
+	contentSize := context.GetInt(FieldContentSize)
+	if contentSize < MaxBufferSize {
+		buf = make([]byte, contentSize)
+	} else {
+		buf = make([]byte, MaxBufferSize)
+	}
+
 	return &HTTPWorker{
 		context,
 		NewClient(context.config),
 		jobs,
 		collector,
-		bytes.NewBuffer(make([]byte, 0, context.GetInt(FieldContentSize)+bytes.MinRead)),
+		&Discard{buf},
 	}
 }
 
@@ -111,8 +121,7 @@ func (h *HTTPWorker) send(request *http.Request) (asyncResult chan *Record) {
 			return
 		}
 
-		defer h.readBuf.Reset()
-		contentSize, err = h.readBuf.ReadFrom(resp.Body)
+		contentSize, err = h.discard.ReadFrom(resp.Body)
 
 		if err != nil {
 			record.Error = &ReceiveError{err}
@@ -135,6 +144,24 @@ func (h *HTTPWorker) send(request *http.Request) (asyncResult chan *Record) {
 		sw.Stop()
 	}()
 	return asyncResult
+}
+
+type Discard struct {
+	blackHole []byte
+}
+
+func (d *Discard) ReadFrom(r io.Reader) (n int64, err error) {
+	readSize := 0
+	for {
+		readSize, err = r.Read(d.blackHole)
+		n += int64(readSize)
+		if err != nil {
+			if err == io.EOF {
+				return n, nil
+			}
+			return
+		}
+	}
 }
 
 func DetectHost(context *Context) (err error) {
