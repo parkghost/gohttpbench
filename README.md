@@ -43,7 +43,7 @@ Options are:
 ### Example:
 	$ gb -c 100 -n 100000 -k http://localhost/10k.dat
 
-	This is GoHttpBench, Version 0.1.7, https://github.com/parkghost/gohttpbench
+	This is GoHttpBench, Version 0.1.9, https://github.com/parkghost/gohttpbench
 	Author: Brandon Chen, Email: parkghost@gmail.com
 	Licensed under the MIT license
 
@@ -61,7 +61,7 @@ Options are:
 	Finished 100000 requests
 
 
-	Server Software:        nginx/1.2.1
+	Server Software:        nginx/1.2.6 (Ubuntu)
 	Server Hostname:        localhost
 	Server Port:            80
 
@@ -69,18 +69,18 @@ Options are:
 	Document Length:        10240 bytes
 
 	Concurrency Level:      100
-	Time taken for tests:   5.43 seconds
+	Time taken for tests:   5.36 seconds
 	Complete requests:      100000
 	Failed requests:        0
 	HTML transferred:       1024000000 bytes
-	Requests per second:    18428.80 [#/sec] (mean)
-	Time per request:       5.426 [ms] (mean)
+	Requests per second:    18652.41 [#/sec] (mean)
+	Time per request:       5.361 [ms] (mean)
 	Time per request:       0.054 [ms] (mean, across all concurrent requests)
-	HTML Transfer rate:     184287.98 [Kbytes/sec] received
+	HTML Transfer rate:     186524.05 [Kbytes/sec] received
 
 	Connection Times (ms)
 	              min	mean[+/-sd]	median	max
-	Total:        0     	0   2.94 	4 	39
+	Total:        0     	0   3.03 	4 	32
 
 	Percentage of the requests served within a certain time (ms)
 	 50%	 4
@@ -89,12 +89,12 @@ Options are:
 	 80%	 7
 	 90%	 8
 	 95%	 10
-	 98%	 11
-	 99%	 13
-	 100%	 39 (longest request)
+	 98%	 12
+	 99%	 14
+	 100%	 32 (longest request)
 
 
-Authors
+Author
 -------
 
 **Brandon Chen**
