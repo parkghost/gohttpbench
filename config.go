@@ -58,7 +58,7 @@ func LoadConfig() (config *Config, err error) {
 	keepAlive := flag.Bool("k", false, "Use HTTP KeepAlive feature")
 	gzip := flag.Bool("z", false, "Use HTTP Gzip feature")
 
-	help := flag.Bool("h", false, "Display usage information (this message)")
+	showHelp := flag.Bool("h", false, "Display usage information (this message)")
 
 	flag.Usage = func() {
 		fmt.Print("Usage: gb [options] http[s]://hostname[:port]/path\nOptions are:\n")
@@ -67,12 +67,22 @@ func LoadConfig() (config *Config, err error) {
 
 	flag.Parse()
 
-	urlStr := strings.Trim(strings.Join(flag.Args(), " "), " ")
-	isURL, _ := regexp.MatchString(`http.*?://.*`, urlStr)
-
-	if *help || len(os.Args) == 1 || !isURL {
+	if *showHelp {
 		flag.Usage()
 		os.Exit(0)
+	}
+
+	if flag.NArg() != 1 {
+		flag.Usage()
+		os.Exit(-1)
+	}
+
+	urlStr := strings.Trim(strings.Join(flag.Args(), ""), " ")
+	isURL, _ := regexp.MatchString(`http.*?://.*`, urlStr)
+
+	if !isURL {
+		flag.Usage()
+		os.Exit(-1)
 	}
 
 	// build configuration
