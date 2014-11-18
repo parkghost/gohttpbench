@@ -221,7 +221,7 @@ func NewHTTPRequest(config *Config) (request *http.Request, err error) {
 
 	var body io.Reader
 
-	if (config.method == "POST" || config.method == "PUT") && config.bodyContent != nil {
+	if config.method == "POST" || config.method == "PUT" {
 		body = bytes.NewReader(config.bodyContent)
 	}
 
@@ -258,14 +258,11 @@ func NewHTTPRequest(config *Config) (request *http.Request, err error) {
 }
 
 func CopyHTTPRequest(config *Config, request *http.Request) *http.Request {
-	if config.method == "POST" || config.method == "PUT" {
-		newRequest := *request
-		if newRequest.Body != nil {
-			newRequest.Body = ioutil.NopCloser(bytes.NewReader(config.bodyContent))
-		}
-		return &newRequest
+	newRequest := *request
+	if request.Body != nil {
+		newRequest.Body = ioutil.NopCloser(bytes.NewReader(config.bodyContent))
 	}
-	return request
+	return &newRequest
 }
 
 type LengthError struct {
