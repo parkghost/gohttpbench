@@ -92,24 +92,24 @@ loop:
 }
 
 func updateStats(stats *Stats, record *Record) {
-	stats.totalRequests += 1
+	stats.totalRequests++
 
 	if record.Error != nil {
-		stats.totalFailedReqeusts += 1
+		stats.totalFailedReqeusts++
 
 		switch record.Error.(type) {
 		case *ConnectError:
-			stats.errConnect += 1
+			stats.errConnect++
 		case *ExceptionError:
-			stats.errException += 1
+			stats.errException++
 		case *LengthError:
-			stats.errLength += 1
+			stats.errLength++
 		case *ReceiveError:
-			stats.errReceive += 1
+			stats.errReceive++
 		case *ResponseError:
-			stats.errResponse += 1
+			stats.errResponse++
 		default:
-			stats.errException += 1
+			stats.errException++
 		}
 
 	} else {

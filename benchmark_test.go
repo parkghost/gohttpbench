@@ -35,7 +35,7 @@ func TestBenchmark(t *testing.T) {
 	go func() {
 		counter := 0
 		for record := range benchmark.collector {
-			counter += 1
+			counter++
 			if counter == requests || record.Error != nil {
 				break
 			}
