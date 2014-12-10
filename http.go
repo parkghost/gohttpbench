@@ -20,7 +20,7 @@ const (
 )
 
 var (
-	invalidContnetSize = errors.New("invalid content size")
+	ErrInvalidContnetSize = errors.New("invalid content size")
 )
 
 type HTTPWorker struct {
@@ -137,7 +137,7 @@ func (h *HTTPWorker) send(request *http.Request) (asyncResult chan *Record) {
 		}
 
 		if h.c.config.method != "HEAD" && int64(expectedContentSize) != contentSize {
-			record.Error = &LengthError{invalidContnetSize}
+			record.Error = &LengthError{ErrInvalidContnetSize}
 			return
 		}
 
