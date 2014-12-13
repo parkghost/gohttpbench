@@ -42,11 +42,12 @@ func (m *Monitor) Run() {
 	stats := &Stats{}
 	stats.responseTimeData = make([]time.Duration, 0, m.c.config.requests)
 
-	var timelimit time.Timer
+	var timelimiter <-chan time.Time
 	if m.c.config.timelimit > 0 {
-		timelimit = *time.NewTimer(time.Duration(m.c.config.timelimit) * time.Second)
+		t := time.NewTimer(time.Duration(m.c.config.timelimit) * time.Second)
+		defer t.Stop()
+		timelimiter = t.C
 	}
-	defer timelimit.Stop()
 
 	// waiting for all of http workers to start
 	m.c.start.Wait()
@@ -75,7 +76,7 @@ loop:
 				break loop
 			}
 
-		case <-timelimit.C:
+		case <-timelimiter:
 			break loop
 		case <-userInterrupt:
 			break loop
