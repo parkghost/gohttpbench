@@ -122,22 +122,13 @@ func (h *HTTPWorker) send(request *http.Request) (asyncResult chan *Record) {
 		}
 
 		contentSize, err = h.discard.ReadFrom(resp.Body)
-
 		if err != nil {
+			if err == io.ErrUnexpectedEOF {
+				record.Error = &LengthError{ErrInvalidContnetSize}
+				return
+			}
+
 			record.Error = &ReceiveError{err}
-			return
-		}
-
-		expectedContentSize := 0
-		headerContentSize := resp.Header.Get("Content-Length")
-		if headerContentSize != "" {
-			expectedContentSize, _ = strconv.Atoi(headerContentSize)
-		} else {
-			expectedContentSize = h.c.GetInt(FieldContentSize)
-		}
-
-		if h.c.config.method != "HEAD" && int64(expectedContentSize) != contentSize {
-			record.Error = &LengthError{ErrInvalidContnetSize}
 			return
 		}
 
