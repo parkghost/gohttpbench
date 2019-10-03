@@ -99,7 +99,6 @@ Author
 
 **Brandon Chen**
 
-+ http://brandonc.me
 + http://github.com/parkghost
 
 
