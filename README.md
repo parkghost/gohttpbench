@@ -1,7 +1,5 @@
 Go-HttpBench
 
-[![Build Status](https://drone.io/github.com/parkghost/gohttpbench/status.png)](https://drone.io/github.com/parkghost/gohttpbench/latest)
-
 ====
 
 *an ab-like benchmark tool run on multi-core cpu*
