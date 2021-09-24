@@ -2,6 +2,13 @@ Go-HttpBench
 
 ====
 
+Feature added:
+
+support http and https proxy
+
+
+====
+
 *an ab-like benchmark tool run on multi-core cpu*
 
 Installation
@@ -36,6 +43,7 @@ Options are:
   -u="": File containing data to PUT. Remember also to set -T
   -v=0: How much troubleshooting info to print
   -z=false: Use HTTP Gzip feature
+	-X [Protocal://]Proxyhost:Port: Use socks5/https/https proxy (does not verify certs)
 ```
 
 ### Example:

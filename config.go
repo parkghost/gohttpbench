@@ -29,6 +29,7 @@ type Config struct {
 	keepAlive           bool
 	basicAuthentication string
 	userAgent           string
+	proxyServer         *url.URL
 
 	url  string
 	host string
@@ -40,6 +41,8 @@ func LoadConfig() (config *Config, err error) {
 	flag.IntVar(&Verbosity, "v", 0, "How much troubleshooting info to print")
 	flag.IntVar(&GoMaxProcs, "G", runtime.NumCPU(), "Number of CPU")
 	flag.BoolVar(&ContinueOnError, "r", false, "Don't exit when errors")
+
+	proxyServer := flag.String("X", "", "Proxy server, [Protocal://]Address:Port ")
 
 	request := flag.Int("n", 1, "Number of requests to perform")
 	concurrency := flag.Int("c", 1, "Number of multiple requests to make")
@@ -114,6 +117,21 @@ func LoadConfig() (config *Config, err error) {
 		}
 	}
 	config.executionTimeout = MaxExecutionTimeout
+
+	// set proxy
+	proxy := *proxyServer
+	if proxy != "" {
+		if matched, _ := regexp.MatchString(`^\w+://`, proxy); !matched {
+			proxy = "http://" + proxy
+		}
+		uri, err := url.Parse(proxy)
+		if err != nil {
+			err = errors.New("Proxy server not recognized! " + proxy)
+			return config, err
+		} else {
+			config.proxyServer = uri
+		}
+	}
 
 	config.contentType = *contentType
 	config.keepAlive = *keepAlive

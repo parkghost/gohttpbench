@@ -205,6 +205,25 @@ func NewClient(config *Config) *http.Client {
 		TLSClientConfig:    tlsconfig,
 	}
 
+	// set proxy
+	if config.proxyServer != nil {
+		switch config.proxyServer.Scheme {
+		case "socks5":
+			transport.Proxy = http.ProxyURL(config.proxyServer)
+		case "http":
+			transport.Proxy = http.ProxyURL(config.proxyServer)
+			transport.TLSNextProto = make(map[string]func(authority string, c *tls.Conn) http.RoundTripper)
+		case "https":
+			transport.Proxy = http.ProxyURL(config.proxyServer)
+			transport.TLSNextProto = make(map[string]func(authority string, c *tls.Conn) http.RoundTripper)
+		case "":
+			transport.Proxy = http.ProxyURL(config.proxyServer)
+			transport.TLSNextProto = make(map[string]func(authority string, c *tls.Conn) http.RoundTripper)
+		default:
+			fmt.Printf("cannot handle proxy %s://%s", config.proxyServer.Scheme, config.proxyServer.Host)
+		}
+	}
+
 	return &http.Client{Transport: transport}
 }
 

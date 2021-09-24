@@ -52,7 +52,12 @@ func (m *Monitor) Run() {
 	// waiting for all of http workers to start
 	m.c.start.Wait()
 
-	fmt.Printf("Benchmarking %s (be patient)\n", m.c.config.host)
+	benchmarkHost := m.c.config.host
+	if m.c.config.proxyServer != nil {
+		benchmarkHost += fmt.Sprintf(" [through %s://%s]", m.c.config.proxyServer.Scheme, m.c.config.proxyServer.Host)
+	}
+
+	fmt.Printf("Benchmarking %s (be patient)\n", benchmarkHost)
 	sw := &StopWatch{}
 	sw.Start()
 
