@@ -11,7 +11,8 @@ import (
 
 func PrintHeader() {
 	fmt.Println(`
-This is GoHttpBench, Version ` + GBVersion + `, https://github.com/parkghost/gohttpbench
+This is GoHttpBench, Version ` + GBVersion + `, https://github.com/maxwheel/gohttpbench
+Author: Yue, Email: maxwheel@126.com
 Author: Brandon Chen, Email: parkghost@gmail.com
 Licensed under the MIT license
 `)

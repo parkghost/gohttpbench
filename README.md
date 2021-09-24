@@ -1,10 +1,13 @@
 Go-HttpBench
 
+GO-based apache bench tool. Based on [github.com/parkghost/gohttpbench](github.com/parkghost/gohttpbench)
+
 ====
 
 Feature added:
 
-support http and https proxy
+2021/09/24
+support socks5/http/https proxy
 
 
 ====
@@ -17,8 +20,8 @@ Installation
 2. download and build Go-HttpBench
 
 ```
-go get github.com/parkghost/gohttpbench
-go build -o gb github.com/parkghost/gohttpbench
+go get github.com/maxwheel/gohttpbench
+go build -o gb github.com/maxwheel/gohttpbench
 ```
 
 Usage
@@ -49,7 +52,8 @@ Options are:
 ### Example:
 	$ gb -c 100 -n 100000 -k http://localhost/10k.dat
 
-	This is GoHttpBench, Version 0.1.9, https://github.com/parkghost/gohttpbench
+	This is GoHttpBench, Version 0.2.0, https://github.com/maxwheel/gohttpbench
+	Author: Yue, Email: maxwheel@126.com
 	Author: Brandon Chen, Email: parkghost@gmail.com
 	Licensed under the MIT license
 
