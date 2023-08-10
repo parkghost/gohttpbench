@@ -14,6 +14,13 @@ go get github.com/parkghost/gohttpbench
 go build -o gb github.com/parkghost/gohttpbench
 ```
 
+or
+
+```
+git clone github.com/parkghost/gohttpbench
+GO111MODULE=off go build -ldflags "-s" -o gb
+```
+
 Usage
 -----------
 
@@ -27,6 +34,7 @@ Options are:
   -T="text/plain": Content-type header for POSTing, eg. 'application/x-www-form-urlencoded' Default is 'text/plain'
   -c=1: Number of multiple requests to make
   -h=false: Display usage information (this message)
+  -V=false: Display version information (and exit)
   -i=false: Use HEAD instead of GET
   -k=false: Use HTTP KeepAlive feature
   -n=1: Number of requests to perform
@@ -91,6 +99,11 @@ Options are:
 	 99%	 14
 	 100%	 32 (longest request)
 
+Version output:
+```
+./gb -V
+GoHttpBench: 0.2.0-dev; GoLang: go1.21.0
+```
 
 Author
 -------

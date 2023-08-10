@@ -75,7 +75,7 @@ func LoadConfig() (config *Config, err error) {
 	}
 
 	if *showVersion {
-		fmt.Print("GoHttpBench:" + GBVersion + "; GoLang: " + runtime.Version() + "\n")
+		fmt.Print("GoHttpBench: " + GBVersion + "; GoLang: " + runtime.Version() + "\n")
 		os.Exit(0)
 	}
 
