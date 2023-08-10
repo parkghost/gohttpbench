@@ -60,6 +60,8 @@ func LoadConfig() (config *Config, err error) {
 
 	showHelp := flag.Bool("h", false, "Display usage information (this message)")
 
+	showVersion := flag.Bool("V", false, "Display version information (and exit)")
+
 	flag.Usage = func() {
 		fmt.Print("Usage: gb [options] http[s]://hostname[:port]/path\nOptions are:\n")
 		flag.PrintDefaults()
@@ -69,6 +71,11 @@ func LoadConfig() (config *Config, err error) {
 
 	if *showHelp {
 		flag.Usage()
+		os.Exit(0)
+	}
+
+	if *showVersion {
+		fmt.Print("GoHttpBench: " + GBVersion + "; GoLang: " + runtime.Version() + "\n")
 		os.Exit(0)
 	}
 
